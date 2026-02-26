@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supervisor Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root{--electric-blue:rgb(20,46,255);--warm-cream:rgb(255,248,239);--deep-navy:rgb(0,32,74);--vivid-red:rgb(255,0,61);--sky-cyan:rgb(175,238,249);--bg:#f4f6fb}
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); min-height: 100vh; }
+
+        /* ── Login ── */
+        #loginScreen { min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; background: linear-gradient(160deg, var(--electric-blue) 0%, var(--deep-navy) 100%); }
+        .login-container { background: #fff; border-radius: 24px; padding: 50px 45px; box-shadow: 0 30px 80px rgba(0,0,0,.3); max-width: 440px; width: 100%; position: relative; z-index: 1; }
+        .login-header { text-align: center; margin-bottom: 40px; }
+        .login-icon { font-size: 3em; margin-bottom: 10px; }
+        .login-header h1 { font-family: 'Outfit', sans-serif; color: var(--deep-navy); margin-bottom: 10px; font-size: 1.7em; font-weight: 800; }
+        .login-header p { color: #8896a6; }
+        .form-group { margin-bottom: 22px; }
+        .form-group label { display: block; color: var(--deep-navy); font-weight: 600; margin-bottom: 8px; font-size: .88em; }
+        .form-group input { width: 100%; padding: 14px 18px; border: 2px solid #e8eaf0; border-radius: 12px; font-size: .95em; font-family: 'DM Sans', sans-serif; transition: border-color .3s; color: var(--deep-navy); }
+        .form-group input:focus { outline: none; border-color: var(--electric-blue); }
+        .login-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--electric-blue), var(--deep-navy)); color: #fff; border: none; border-radius: 12px; font-size: 1.05em; font-weight: 700; font-family: 'Outfit', sans-serif; cursor: pointer; transition: all .3s; margin-top: 10px; }
+        .login-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(20,46,255,.35); }
+        .error-message { background: rgba(255,0,61,.06); color: var(--vivid-red); padding: 12px; border-radius: 10px; margin-bottom: 20px; text-align: center; display: none; border: 1px solid rgba(255,0,61,.15); }
+        .back-link { text-align: center; margin-top: 20px; }
+        .back-link a { color: var(--electric-blue); text-decoration: none; font-weight: 600; font-size: .9em; }
+        .back-link a:hover { text-decoration: underline; }
+
+        /* ── Dashboard ── */
+        #dashboard { display: none; background: var(--bg); min-height: 100vh; }
+        #dashboard.active { display: block; }
+        .dashboard-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .dashboard-header { background: linear-gradient(135deg, var(--electric-blue) 0%, var(--deep-navy) 100%); padding: 35px 40px; display: flex; justify-content: space-between; align-items: center; position: relative; overflow: hidden; }
+        .user-info h2 { font-family: 'Outfit', sans-serif; color: #fff; margin-bottom: 5px; font-size: 1.8em; font-weight: 800; }
+        .user-info p { color: rgba(255,255,255,.5); font-size: .9em; }
+        .logout-btn { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); color: #fff; padding: 10px 24px; border-radius: 10px; cursor: pointer; font-size: .9em; font-weight: 600; transition: all .3s; }
+        .logout-btn:hover { background: rgba(255,0,61,.2); border-color: var(--vivid-red); }
+
+        /* ── Summary Cards ── */
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 18px; padding: 0 40px 30px; margin-top: -10px; position: relative; z-index: 2; }
+        .summary-card { background: #fff; border-radius: 16px; padding: 24px; text-align: center; box-shadow: 0 4px 20px rgba(20,46,255,.06); border-left: 4px solid var(--electric-blue); transition: all .3s; }
+        .summary-card .icon { font-size: 1.4em; margin-bottom: 8px; }
+        .summary-card .value { font-family: 'Outfit', sans-serif; font-size: 1.9em; font-weight: 800; color: var(--deep-navy); }
+        .summary-card .label { color: #8896a6; font-size: .8em; font-weight: 600; margin-top: 4px; }
+
+        /* ── Tab Navigation ── */
+        .tab-nav { display: flex; gap: 4px; background: #fff; margin: 0 40px; border-radius: 16px 16px 0 0; padding: 8px 8px 0; box-shadow: 0 -2px 10px rgba(0,0,0,.02); }
+        .tab-btn { flex: 1; padding: 16px 28px; text-align: center; cursor: pointer; font-size: .9em; font-weight: 700; color: #8896a6; border: none; background: transparent; transition: all .2s; border-bottom: 3px solid transparent; border-radius: 8px 8px 0 0; }
+        .tab-btn:hover { background: rgba(20,46,255,.02); color: var(--deep-navy); }
+        .tab-btn.active { color: var(--electric-blue); border-bottom-color: var(--electric-blue); background: rgba(20,46,255,.03); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* ── Sections ── */
+        .section-card { background: transparent; border-radius: 0; padding: 0; margin-bottom: 30px; box-shadow: none; }
+        .section-card h3 { font-family: 'Outfit', sans-serif; color: var(--deep-navy); margin-bottom: 25px; font-size: 1.15em; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+
+        /* ── Tables ── */
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table thead { background: linear-gradient(135deg, rgba(20,46,255,.04), rgba(175,238,249,.08)); }
+        .data-table th { padding: 14px 16px; text-align: left; color: var(--deep-navy); font-weight: 700; font-size: .82em; white-space: nowrap; text-transform: uppercase; letter-spacing: .04em; }
+        .data-table td { padding: 14px 16px; border-bottom: 1px solid #f0f2f8; color: #444; font-size: .9em; }
+        .data-table tbody tr:hover { background: rgba(175,238,249,.12); }
+        .total-row { background: linear-gradient(135deg, rgba(20,46,255,.04), rgba(175,238,249,.08)); font-weight: 700; }
+        .total-row td { padding: 16px; border-bottom: none; color: var(--deep-navy); }
+        .no-data { text-align: center; padding: 40px; color: #8896a6; font-style: italic; }
+        .sales-val { color: var(--electric-blue); font-weight: 700; }
+        .pct-badge { display: inline-block; padding: 5px 14px; border-radius: 20px; font-weight: 700; font-size: .85em; }
+        .pct-high { background: linear-gradient(135deg, rgba(20,46,255,.08), rgba(175,238,249,.15)); color: var(--electric-blue); }
+        .pct-mid { background: rgba(255,248,239,.8); color: #856404; }
+        .pct-low { background: rgba(255,0,61,.08); color: var(--vivid-red); }
+
+        /* ── Toolbar ── */
+        .toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 20px; }
+        .toolbar input[type="text"] { padding: 11px 18px; border: 2px solid #e8eaf0; border-radius: 10px; font-size: .9em; min-width: 240px; font-family: 'DM Sans', sans-serif; color: var(--deep-navy); }
+        .toolbar input:focus,.toolbar select:focus { outline: none; border-color: var(--electric-blue); }
+        .toolbar select { padding: 11px 14px; border: 2px solid #e8eaf0; border-radius: 10px; font-size: .88em; background: #fff; cursor: pointer; font-family: 'DM Sans', sans-serif; color: var(--deep-navy); }
+        .toolbar label { font-size: .85em; color: #666; font-weight: 600; }
+        .toolbar-group { display: flex; align-items: center; gap: 6px; }
+
+        .group-header-row td { background: linear-gradient(135deg,rgba(175,238,249,.15),rgba(175,238,249,.08)); font-weight: 700; color: #333; padding: 12px; border-bottom: 2px solid var(--electric-blue); }
+        .group-subtotal-row td { background: #fafafa; font-weight: 600; color: #555; font-style: italic; border-bottom: 2px solid #e0e0e0; }
+
+        .rating-stars{color:var(--electric-blue);font-weight:700}
+        .photo-link{color:#2d8a56;font-size:.8em;margin-right:6px;text-decoration:none}
+        .photo-link:hover{text-decoration:underline}
+        .photo-count-badge{background:rgba(175,238,249,.12);color:#2d8a56;padding:3px 10px;border-radius:10px;font-size:.8em;font-weight:600}
+        .survey-count-card{background:#fff;border-radius:15px;padding:25px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+        .survey-loading{text-align:center;padding:30px;color:#999}
+
+        /* ── Progress bar in table ── */
+        .mini-progress { width: 80px; height: 8px; background: #eef0f6; border-radius: 4px; display: inline-block; vertical-align: middle; margin-left: 8px; }
+        .mini-progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--electric-blue), var(--sky-cyan)); }
+
+        @media(max-width:768px){ .dashboard-header{flex-direction:column;gap:20px;text-align:center} .summary-grid{grid-template-columns:1fr 1fr} .toolbar{flex-direction:column;align-items:stretch} .toolbar input[type="text"]{min-width:auto;width:100%} .tab-btn{font-size:.9em;padding:15px 10px} }
+        .cust-summary-row{cursor:pointer;transition:background 0.15s;}
+        .cust-summary-row:hover{background:rgba(175,238,249,.12) !important;}
+        .cust-summary-row td:first-child{text-align:center;font-size:0.85em;color:#aaa;}
+        .var-positive{color:var(--electric-blue);font-weight:700;}
+        .var-negative{color:var(--vivid-red);font-weight:700;}
+        th.sortable{cursor:pointer;user-select:none;position:relative;padding-right:20px !important;}
+        th.sortable::after{content:'⇅';position:absolute;right:4px;top:50%;transform:translateY(-50%);opacity:0.3;font-size:0.75em;}
+        th.sortable.sort-asc::after{content:'▲';opacity:0.8;color:var(--electric-blue);}
+        th.sortable.sort-desc::after{content:'▼';opacity:0.8;color:var(--electric-blue);}
+        th.sortable:hover{background:rgba(20,46,255,0.04);}
+    </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+    <div class="login-container">
+        <div class="login-header"><img src="logo.svg" alt="Logo" style="height:60px;margin-bottom:10px"><div class="login-icon">👨‍💼</div><h1>Supervisor Login</h1><p>Enter your credentials to continue</p></div>
+        <div id="errorMessage" class="error-message"></div>
+        <form id="loginForm">
+            <div class="form-group"><label for="userName">User Name</label><input type="text" id="userName" placeholder="Enter your Username" required></div>
+            <div class="form-group"><label for="userCode">User ID</label><input type="text" id="userCode" placeholder="Enter your User Code" required></div>
+            <button type="submit" class="login-btn">Log In</button>
+        </form>
+        <div class="back-link"><a href="index.html">← Back to Role Selection</a></div>
+    </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <div class="user-info"><h2>Welcome, <span id="dashName"></span>!</h2><p>Supervisor ID: <span id="dashCode"></span></p></div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary-grid">
+            <div class="summary-card"><div class="icon">👥</div><div class="value" id="sumSalesmen">0</div><div class="label">Total Salesmen</div></div>
+            <div class="summary-card"><div class="icon">🎯</div><div class="value" id="sumTarget">0</div><div class="label">Total Target (SAR)</div></div>
+            <div class="summary-card"><div class="icon">💰</div><div class="value" id="sumActual">0</div><div class="label">Total Actual (SAR)</div></div>
+            <div class="summary-card"><div class="icon">📊</div><div class="value" id="sumPct">0%</div><div class="label">Overall Growth</div></div>
+            <div class="summary-card"><div class="icon">🏪</div><div class="value" id="sumCustomers">0</div><div class="label">Total Customers</div></div>
+            <div class="summary-card"><div class="icon">📋</div><div class="value" id="sumSurveys">0</div><div class="label">Total Surveys</div></div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('salesmen')">👥 My Salesmen</button>
+            <button class="tab-btn" onclick="switchTab('customers')">🏪 All Customers</button>
+            <button class="tab-btn" onclick="switchTab('surveys')">📋 Surveys</button>
+        </div>
+
+        <!-- TAB 1: My Salesmen -->
+        <div id="tab-salesmen" class="tab-content active">
+            <div class="section-card">
+                <h3>👥 My Salesmen — Performance Overview</h3>
+                <div class="toolbar">
+                    <div class="toolbar-group"><label>Salesman:</label><select id="smFiltSalesman"><option value="">All</option></select></div>
+                    <div class="toolbar-group"><label>Route:</label><select id="smFiltRoute"><option value="">All</option></select></div>
+                </div>
+                <table class="data-table">
+                    <thead><tr><th class="sortable" data-sort="salesmanCode" data-table="sm">Code</th><th class="sortable" data-sort="salesman" data-table="sm">Salesman</th><th class="sortable" data-sort="routeCode" data-table="sm">Route</th><th class="sortable" data-sort="tgt" data-table="sm">Target</th><th class="sortable" data-sort="actCY" data-table="sm">Actual</th><th class="sortable" data-sort="pctTgt" data-table="sm">%TGT</th><th class="sortable" data-sort="remaining" data-table="sm">Remaining</th><th>Progress</th></tr></thead>
+                    <tbody id="salesmenTableBody"><tr><td colspan="8" class="no-data">Loading…</td></tr></tbody>
+                    <tfoot><tr class="total-row"><td colspan="3">Total</td><td class="sales-val" id="smTotalTgt">0</td><td class="sales-val" id="smTotalAct">0</td><td class="sales-val" id="smTotalPct">0%</td><td class="sales-val" id="smTotalRem">0</td><td></td></tr></tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 2: All Customers -->
+        <div id="tab-customers" class="tab-content">
+            <div class="section-card">
+                <h3>🏪 All Customer Sales</h3>
+                <div class="toolbar">
+                    <input type="text" id="custSearch" placeholder="🔍 Search by name, code, salesman, sector, class..." oninput="clearTimeout(this._t);this._t=setTimeout(()=>{custPage=1;renderCustTable();},300)">
+                    <div class="toolbar-group"><label>Salesman:</label><select id="filtSalesman"><option value="">All</option></select></div>
+                    <div class="toolbar-group"><label>Sector:</label><select id="filtSector"><option value="">All</option></select></div>
+                    <div class="toolbar-group"><label>Class:</label><select id="filtClass"><option value="">All</option></select></div>
+                    <div class="toolbar-group"><label>Date:</label><select id="filtDate"><option value="">All Dates</option></select></div>
+                </div>
+                <table class="data-table" id="custTable">
+                    <thead><tr><th style="width:30px"></th><th class="sortable" data-sort="code">Code</th><th class="sortable" data-sort="customer">Customer</th><th class="sortable" data-sort="salesman">Salesman</th><th class="sortable" data-sort="routeCode">Route</th><th class="sortable" data-sort="sector">Sector</th><th class="sortable" data-sort="cls">Class</th><th class="sortable" data-sort="totalCY">ACT-CY</th><th class="sortable" data-sort="totalLY">ACT-LY</th><th class="sortable" data-sort="varPct">%YoY Growth</th></tr></thead>
+                    <tbody id="custTableBody"><tr><td colspan="8" class="no-data">Loading…</td></tr></tbody>
+                    <tfoot><tr class="total-row"><td colspan="5">Total</td><td class="sales-val"><span id="custTotalCY">0</span></td><td class="sales-val"><span id="custTotalLY">0</span></td><td></td></tr></tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 3: Surveys -->
+        <div id="tab-surveys" class="tab-content">
+            <div class="section-card">
+                <h3>📋 Supervisor Surveys</h3>
+                <div class="toolbar">
+                    <input type="text" id="surveySearch" placeholder="🔍 Search surveys...">
+                    <div class="toolbar-group"><label>Salesman:</label><select id="survFiltSM"><option value="">All</option></select></div>
+                    <div class="toolbar-group"><label>Customer:</label><select id="survFiltCust"><option value="">All</option></select></div>
+                    <div class="toolbar-group"><label>Rating:</label><select id="survFiltRating"><option value="">All</option><option value="low">1-4 (Low)</option><option value="mid">5-7 (Medium)</option><option value="high">8-10 (High)</option></select></div>
+                    <div class="toolbar-group"><label>Sort:</label><select id="survSortBy"><option value="">Latest First</option><option value="rating-desc">Rating ↓</option><option value="rating-asc">Rating ↑</option><option value="salesman-asc">Salesman ↑</option><option value="customer-asc">Customer ↑</option></select></div>
+                </div>
+                <div id="surveyTableContainer"><p class="survey-loading">Loading surveys...</p></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+// ══ GOOGLE APPS SCRIPT CONFIG (smart filtered API) ══
+const AZURE_API_URL = 'https://salesap-g4ceg7arc2bkbvfx.centralus-01.azurewebsites.net/api/api';
+// ══ POWER AUTOMATE CONFIG (surveys only) ══
+const POWER_AUTOMATE_GET_URL = 'https://default04af0493a5b44947ab72ae37fae884.14.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/a52eaf1a49894199856439aa7e837f82/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=TKq2xFQ8rgo4juZL9h8SoNrPOH-gEe24DIOd7Jsu0Qw';
+
+let usersData=[],salesmenData=[],masterData=[],currentUser=null,mySalesmen=[],myMasterData=[],serverCustomerSummary=null;
+let allSurveys=[];
+
+function sanitize(s){const d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
+function toNum(v){const n=Number(v);return isNaN(n)?0:n;}
+
+function applyApiData(data){
+    if(data.user)usersData=[{userCode:String(data.user['User Code']||''),userName:data.user['User Name']||'',role:(data.user.Role||data.user.role||'').trim()}];
+    if(data.salesmenData)salesmenData=data.salesmenData.map(r=>({salesmanCode:String(r['Salesman Code']||''),salesman:r['Salesman']||'',assignedSUP:String(r['Assigned SUP']||''),routeCode:String(r['Route Code']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])*100}));
+    if(data.masterData)masterData=data.masterData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),branchManager:r['Branch Manager']||'',routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',region:r['Region']||'',branch:r['Branch']||'',brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',product:r['Product']||'',date:String(r['Date']||'').substring(0,10),achCYP:toNum(r['ACH CY (P)']),achLYP:toNum(r['ACH LY (P)']),actCY:toNum(r['ACT-CY']),actLY:toNum(r['ACT-LY'])}));
+    if(data.customerSummary)serverCustomerSummary=data.customerSummary;
+    if(data.dates)window._apiDates=data.dates;
+    if(data.dashSummary)window._dashSummary=data.dashSummary;
+    if(data.masterDataTotal)console.log('Server has',data.masterDataTotal,'master rows (not transferred)');
+    return true;
+}
+
+async function loadFromAzure(userCode){
+    if(!AZURE_API_URL)return false;
+    // Client cache disabled — server handles caching for 800K+ rows
+    try{
+        const url=AZURE_API_URL+'?action=login&code='+encodeURIComponent(userCode);
+        const r=await fetch(url);if(!r.ok)return false;
+        const data=await r.json();console.log('Azure API response keys:',Object.keys(data));if(data.error){console.error('Azure API error:',data.error);return false;}
+        applyApiData(data);
+        console.log('Azure API: loaded',salesmenData.length,'salesmen,',masterData.length,'master rows');if(salesmenData.length)console.log('Sample salesman:',JSON.stringify(salesmenData[0]));if(masterData.length)console.log('Sample master:',JSON.stringify(masterData[0]));
+        return true;
+    }catch(e){console.error('Azure API error:',e);return false;}
+}
+
+async function loadData(){
+    // No fallback data — Apps Script is the only data source
+    usersData=[];salesmenData=[];masterData=[];
+}
+
+/* ══ TABS ══ */
+function switchTab(tab){
+    const tabs=['salesmen','customers','surveys'];
+    document.querySelectorAll('.tab-btn').forEach((b,i)=>{b.classList.toggle('active',i===tabs.indexOf(tab));});
+    tabs.forEach(t=>{document.getElementById('tab-'+t).classList.toggle('active',t===tab);});
+}
+
+/* ══ TAB 1: SALESMEN TABLE ══ */
+function renderSalesmenTable(){
+    const tbody=document.getElementById('salesmenTableBody');
+    if(!mySalesmen.length){tbody.innerHTML='<tr><td colspan="8" class="no-data">No salesmen assigned</td></tr>';return;}
+    let sorted=[...mySalesmen].map(s=>({...s,remaining:s.tgt-s.actCY}));
+    const fSM=document.getElementById('smFiltSalesman')?document.getElementById('smFiltSalesman').value:'';
+    const fRT=document.getElementById('smFiltRoute')?document.getElementById('smFiltRoute').value:'';
+    if(fSM)sorted=sorted.filter(s=>String(s.salesmanCode)===fSM);
+    if(fRT)sorted=sorted.filter(s=>String(s.routeCode)===fRT);
+    if(smSortField){
+        const m=smSortDir==='desc'?-1:1;
+        sorted.sort((a,b)=>{const va=a[smSortField],vb=b[smSortField];if(typeof va==='number')return(va-vb)*m;return String(va||'').localeCompare(String(vb||''))*m;});
+    }
+    let html='',tTgt=0,tAct=0;
+    sorted.forEach(s=>{
+        const rem=s.tgt-s.actCY;const pct=s.pctTgt;
+        const cls=pct>=0?'pct-high':'pct-low';
+        const achPct=s.tgt?(s.actCY/s.tgt*100):0;
+        tTgt+=s.tgt;tAct+=s.actCY;
+        html+=`<tr>
+            <td>${sanitize(s.salesmanCode)}</td><td style="font-weight:600;color:#333">${sanitize(s.salesman)}</td><td>${sanitize(s.routeCode)}</td>
+            <td>${s.tgt.toLocaleString()}</td><td class="sales-val">${s.actCY.toLocaleString()}</td>
+            <td><span class="pct-badge ${cls}">${(pct>=0?'+':'')+pct.toFixed(1)}%</span></td>
+            <td>${rem>0?rem.toLocaleString():'—'}</td>
+            <td><div class="mini-progress"><div class="mini-progress-fill" style="width:${Math.min(achPct,100)}%"></div></div></td>
+        </tr>`;
+    });
+    tbody.innerHTML=html;
+    const oPct=tTgt?((tAct-tTgt)/tTgt*100):0;
+    document.getElementById('smTotalTgt').textContent=tTgt.toLocaleString();
+    document.getElementById('smTotalAct').textContent=tAct.toLocaleString();
+    document.getElementById('smTotalPct').textContent=(oPct>=0?'+':'')+oPct.toFixed(1)+'%';
+    document.getElementById('smTotalRem').textContent=(tTgt-tAct>0?(tTgt-tAct).toLocaleString():'—');
+    // Update arrows on salesmen table header
+    document.querySelectorAll('th.sortable[data-table="sm"]').forEach(th=>{th.classList.remove('sort-asc','sort-desc');if(th.dataset.sort===smSortField)th.classList.add('sort-'+smSortDir);});
+}
+
+/* ══ TAB 2: CUSTOMERS TABLE (Summary → Click to Detail Page) ══ */
+let custSortField='customer',custSortDir='asc';
+let custPage=1;const CUST_PAGE_SIZE=50;
+let smSortField='',smSortDir='asc';
+
+function getCustomerSummaries(){
+    const q=document.getElementById('custSearch')?document.getElementById('custSearch').value.toLowerCase():'';
+    const fSM=document.getElementById('filtSM')?document.getElementById('filtSM').value:(document.getElementById('filtSalesman')?document.getElementById('filtSalesman').value:'');
+    const fSec=document.getElementById('filtSector')?document.getElementById('filtSector').value:'';
+    const fCls=document.getElementById('filtClass')?document.getElementById('filtClass').value:'';
+    let summaries=[];
+    if(serverCustomerSummary&&serverCustomerSummary.length){
+        summaries=serverCustomerSummary.map(c=>({
+            code:String(c['Customer Code']||'').trim(),
+            name:c['Customer']||'',
+            salesman:c['Salesman']||String(c['Salesman Code']||''),
+            salesmanCode:String(c['Salesman Code']||'').trim(),
+            routeCode:String(c['Route Code']||'').trim(),
+            sector:c['Sector']||'',
+            cls:c['Class']||'',
+            totalCY:+(c['TotalCY']||0),
+            totalLY:+(c['TotalLY']||0),
+            varPct:+(c['VarPct']||0)
+        }));
+    }
+    if(fSM)summaries=summaries.filter(c=>c.salesmanCode===fSM);
+    if(fSec)summaries=summaries.filter(c=>c.sector===fSec);
+    if(fCls)summaries=summaries.filter(c=>c.cls===fCls);
+    if(q)summaries=summaries.filter(c=>[c.code,c.name,c.salesman,c.routeCode,c.sector,c.cls].some(v=>String(v).toLowerCase().includes(q)));
+    if(custSortField){
+        const m=custSortDir==='desc'?-1:1;
+        summaries.sort((a,b)=>{let va=a[custSortField],vb=b[custSortField];if(custSortField==='customer'){va=a.name;vb=b.name;}if(typeof va==='number')return(va-vb)*m;return String(va||'').localeCompare(String(vb||''))*m;});
+    }
+    return summaries;
+}
+
+async function openCustomerDetail(code){
+    const summaries=getCustomerSummaries();
+    const cust=summaries.find(c=>c.code===code);if(!cust)return;
+    try{
+        const url=AZURE_API_URL+'?action=customerDetail&code='+encodeURIComponent(currentUser.userCode)+'&customer='+encodeURIComponent(code);
+        const r=await fetch(url);
+        if(r.ok){
+            const data=await r.json();
+            const rows=(data.rows||[]).map(r=>({
+                supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),
+                routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),
+                customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',
+                brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',
+                product:r['Product']||'',date:String(r['Date']||'').substring(0,10),
+                achCYP:+(r['ACH CY (P)'])||0,achLYP:+(r['ACH LY (P)'])||0,
+                actCY:+(r['ACT-CY'])||0,actLY:+(r['ACT-LY'])||0
+            }));
+            sessionStorage.setItem('customerDetailInfo',JSON.stringify({
+                customerCode:cust.code,customerName:cust.name,salesman:cust.salesman,
+                salesmanCode:cust.salesmanCode,routeCode:cust.routeCode,
+                spvName:currentUser.userName,spvCode:currentUser.userCode,rows:rows
+            }));
+            window.open('customer_detail.html','_blank');
+        }
+    }catch(e){console.error('Customer detail error:',e);}
+}
+
+function renderCustTable(){
+    const allSummaries=getCustomerSummaries();
+    const tbody=document.getElementById('custTableBody');
+    const total=allSummaries.length;
+    const totalPages=Math.ceil(total/CUST_PAGE_SIZE);
+    if(custPage>totalPages)custPage=totalPages||1;
+    if(!total){tbody.innerHTML='<tr><td colspan="12" class="no-data">No data found</td></tr>';document.getElementById('custTotalCY').textContent='0';document.getElementById('custTotalLY').textContent='0';updateCustPagination(0,0);return;}
+    let tCY=0,tLY=0;
+    allSummaries.forEach(c=>{tCY+=c.totalCY;tLY+=c.totalLY;});
+    const start=(custPage-1)*CUST_PAGE_SIZE;
+    const pageData=allSummaries.slice(start,start+CUST_PAGE_SIZE);
+    let html='';
+    pageData.forEach(c=>{
+        const varCls=c.varPct>=0?'var-positive':'var-negative';
+        const varStr=(c.varPct>=0?'+':'')+c.varPct.toFixed(1)+'%';
+        html+=`<tr class="cust-summary-row" onclick="openCustomerDetail('${sanitize(c.code)}')">
+            <td>🔗</td><td style="font-weight:600">${sanitize(c.code)}</td><td style="font-weight:600;color:#333">${sanitize(c.name)}</td>
+            <td>${sanitize(c.salesman)}</td><td>${sanitize(c.routeCode)}</td>
+            <td>${sanitize(c.sector)}</td><td>${sanitize(c.cls)}</td>
+            <td class="sales-val">${c.totalCY.toLocaleString()}</td><td>${c.totalLY.toLocaleString()}</td><td><span class="${varCls}">${varStr}</span></td></tr>`;
+    });
+    tbody.innerHTML=html;
+    document.getElementById('custTotalCY').textContent=tCY.toLocaleString();document.getElementById('custTotalLY').textContent=tLY.toLocaleString();
+    updateSortArrows('custTable',custSortField,custSortDir);
+    updateCustPagination(total,totalPages);
+}
+function updateCustPagination(total,totalPages){
+    let pg=document.getElementById('custPagination');
+    if(!pg){pg=document.createElement('div');pg.id='custPagination';pg.style.cssText='display:flex;align-items:center;justify-content:center;gap:12px;padding:15px;font-size:.9em;';
+    document.getElementById('custTable').parentNode.appendChild(pg);}
+    if(!total){pg.innerHTML='';return;}
+    pg.innerHTML=`<button onclick="custPage=1;renderCustTable()" ${custPage<=1?'disabled':''} style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer">«</button>`+
+    `<button onclick="custPage--;renderCustTable()" ${custPage<=1?'disabled':''} style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer">‹</button>`+
+    `<span style="font-weight:600">Page ${custPage} of ${totalPages}</span><span style="color:#888">(${total} customers)</span>`+
+    `<button onclick="custPage++;renderCustTable()" ${custPage>=totalPages?'disabled':''} style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer">›</button>`+
+    `<button onclick="custPage=${totalPages};renderCustTable()" ${custPage>=totalPages?'disabled':''} style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer">»</button>`;
+}
+
+function populateCustFilters(){
+    const fill=(id,vals,lbl)=>{const el=document.getElementById(id);if(!el)return;el.innerHTML=`<option value="">All ${lbl}</option>`;vals.forEach(v=>{el.innerHTML+=`<option value="${sanitize(v[0])}">${sanitize(v[1])}</option>`;});};
+    const smOpts=mySalesmen.map(s=>[String(s.salesmanCode), `${s.salesman} (${s.salesmanCode})`]);
+    fill('filtSalesman',smOpts,'Salesmen');
+    // Populate salesman tab filters
+    fill('smFiltSalesman',smOpts,'Salesmen');
+    fill('smFiltRoute',[...new Set(mySalesmen.map(s=>String(s.routeCode)))].sort((a,b)=>Number(a)-Number(b)).map(v=>[v,v]),'Routes');
+    // Use serverCustomerSummary OR myMasterData for customer filters
+    const src=serverCustomerSummary&&serverCustomerSummary.length?serverCustomerSummary.map(c=>({customerCode:String(c['Customer Code']||c.customerCode||''),customer:c['Customer']||c.customer||'',routeCode:String(c['Route Code']||c.routeCode||''),sector:c['Sector']||c.sector||'',cls:c['Class']||c.cls||''})):myMasterData;
+    const codeKey=serverCustomerSummary?'customerCode':'customerCode';
+    const custKey=serverCustomerSummary?'customer':'customer';
+    fill('filtCustCode',[...new Set(src.map(r=>String(r.customerCode||r[codeKey])))].sort().map(v=>[v,v]),'Codes');
+    fill('filtCustomer',[...new Set(src.map(r=>r.customer||r[custKey]))].sort().map(v=>[v,v]),'Customers');
+    fill('filtRoute',[...new Set(src.map(r=>String(r.routeCode)))].sort((a,b)=>Number(a)-Number(b)).map(v=>[v,v]),'Routes');
+    fill('filtSector',[...new Set(src.map(r=>r.sector||'').filter(v=>v))].sort().map(v=>[v,v]),'Sectors');
+    fill('filtClass',[...new Set(src.map(r=>r.cls||'').filter(v=>v))].sort().map(v=>[v,v]),'Classes');
+}
+
+// ══ COLUMN SORT UTIL ══
+function updateSortArrows(tableId,field,dir){
+    const table=document.getElementById(tableId);if(!table)return;
+    table.querySelectorAll('th.sortable').forEach(th=>{th.classList.remove('sort-asc','sort-desc');
+        if(th.dataset.sort===field)th.classList.add('sort-'+dir);
+    });
+}
+
+/* ══ TAB 3: SURVEYS ══ */
+async function loadAllSurveys(){
+    if(!POWER_AUTOMATE_GET_URL){document.getElementById('surveyTableContainer').innerHTML='<p class="no-data" style="padding:20px">Configure POWER_AUTOMATE_GET_URL to load surveys</p>';return;}
+    try{
+        document.getElementById('surveyTableContainer').innerHTML='<p class="survey-loading">Loading surveys...</p>';
+        const smCodes=mySalesmen.map(s=>String(s.salesmanCode));
+        // Include supervisor's own code so surveys created by supervisor are included
+        const spvCode=String(currentUser.userCode);
+        if(!smCodes.includes(spvCode))smCodes.push(spvCode);
+        console.log('Loading surveys for codes:',smCodes);
+        const sep=POWER_AUTOMATE_GET_URL.includes('?')?'&':'?';
+        const r=await fetch(POWER_AUTOMATE_GET_URL+sep+'t='+Date.now(),{mode:'cors'});
+        if(r.ok){
+            const data=await r.json();
+            console.log('Survey GET response:',JSON.stringify(data).substring(0,500));
+            const rows=Array.isArray(data)?data:(data.value||data.rows||[]);
+            console.log('Total rows from Excel:',rows.length);
+            if(rows.length>0)console.log('Row keys:',Object.keys(rows[0]));
+            const g=(row,...keys)=>{const rks=Object.keys(row);for(const k of keys){if(row[k]!==undefined&&row[k]!==null&&String(row[k]).trim())return String(row[k]).trim();const m=rks.find(rk=>rk.trim()===k);if(m&&row[m]!==undefined&&row[m]!==null&&String(row[m]).trim())return String(row[m]).trim();}return'';};
+            const filtered=rows.filter(row=>{
+                const supCode=g(row,'SupervisorCode','supervisorCode','Supervisor Code');
+                return supCode===spvCode;
+            });
+            console.log('Filtered surveys:',filtered.length);
+            allSurveys=filtered.map(row=>({
+                customerName:g(row,'CustomerName','customerName','Customer Name'),
+                customerCode:g(row,'CustomerCode','customerCode','Customer Code'),
+                rating:parseInt(g(row,'Rating','rating'))||0,
+                date:parseExcelDate(g(row,'Date','date')),
+                time:parseExcelTime(g(row,'Time','time')),
+                supervisorName:g(row,'Supervisor','supervisorName','Supervisor Name'),
+                supervisorCode:g(row,'SupervisorCode','supervisorCode','Supervisor Code'),
+                photoURLs:['Photo1URL','Photo2URL','Photo3URL','Photo4URL','Photo5URL'].map(k=>row[k]).filter(u=>u&&String(u).trim())
+            }));
+        }else{console.error('GET not OK:',r.status);}
+    }catch(e){console.error('Load surveys error:',e);}
+    document.getElementById('sumSurveys').textContent=allSurveys.length;
+    populateSurveyFilters();
+    renderSurveyTable();
+}
+
+function parseExcelDate(val){
+    if(!val)return'';
+    const s=String(val).trim();
+    // Already formatted date string (e.g. "07 Feb 2026" or "2026-02-07")
+    if(s.match(/[a-zA-Z]/)|| s.match(/^\d{4}-\d{2}-\d{2}/))return s.replace(/ 00:00:00$/,'');
+    const n=Number(s);
+    if(!isNaN(n)&&n>30000&&n<100000){
+        // Excel serial number
+        const d=new Date((n-25569)*86400000);
+        return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    }
+    return s;
+}
+
+function parseExcelTime(val){
+    if(!val)return'';
+    const s=String(val).trim();
+    // Already formatted time (e.g. "10:32" or "10:32:00")
+    if(s.match(/^\d{1,2}:\d{2}/))return s.replace(/:00$/,'');
+    const n=Number(s);
+    // Fractional day (0.0 - 0.9999)
+    if(!isNaN(n)&&n>=0&&n<1){
+        const totalMins=Math.round(n*24*60);
+        return String(Math.floor(totalMins/60)).padStart(2,'0')+':'+String(totalMins%60).padStart(2,'0');
+    }
+    // Excel datetime serial (e.g. 46069.438) — extract time fraction
+    if(!isNaN(n)&&n>30000){
+        const frac=n-Math.floor(n);
+        if(frac>0){
+            const totalMins=Math.round(frac*24*60);
+            return String(Math.floor(totalMins/60)).padStart(2,'0')+':'+String(totalMins%60).padStart(2,'0');
+        }
+    }
+    return s;
+}
+
+function populateSurveyFilters(){
+    const fill=(id,vals,lbl)=>{const s=document.getElementById(id);s.innerHTML=`<option value="">All ${lbl}</option>`;vals.forEach(v=>{s.innerHTML+=`<option value="${sanitize(v[0])}">${sanitize(v[1])}</option>`;});};
+    const supOpts=[...new Set(allSurveys.map(s=>s.supervisorCode))].map(c=>{const sv=allSurveys.find(s=>s.supervisorCode==c);return[String(c),sv?sv.supervisorName+' ('+c+')':String(c)];});
+    fill('survFiltSM',supOpts,'Supervisors');
+    fill('survFiltCust',[...new Set(allSurveys.map(s=>s.customerName))].sort().map(v=>[v,v]),'Customers');
+}
+
+function getSurveyFiltered(){
+    const q=document.getElementById('surveySearch').value.toLowerCase();
+    const fSM=document.getElementById('survFiltSM').value,fC=document.getElementById('survFiltCust').value,fR=document.getElementById('survFiltRating').value;
+    let d=[...allSurveys];
+    if(fSM)d=d.filter(s=>String(s.supervisorCode)===fSM);
+    if(fC)d=d.filter(s=>s.customerName===fC);
+    if(fR==='low')d=d.filter(s=>s.rating>=1&&s.rating<=4);
+    else if(fR==='mid')d=d.filter(s=>s.rating>=5&&s.rating<=7);
+    else if(fR==='high')d=d.filter(s=>s.rating>=8&&s.rating<=10);
+    if(q)d=d.filter(s=>[s.supervisorName,s.customerName,s.customerCode,s.date].some(v=>String(v).toLowerCase().includes(q)));
+    const sv=document.getElementById('survSortBy').value;
+    if(sv==='rating-desc')d.sort((a,b)=>b.rating-a.rating);
+    else if(sv==='rating-asc')d.sort((a,b)=>a.rating-b.rating);
+    else if(sv==='salesman-asc')d.sort((a,b)=>(a.supervisorName||'').localeCompare(b.supervisorName||''));
+    else if(sv==='customer-asc')d.sort((a,b)=>a.customerName.localeCompare(b.customerName));
+    return d;
+}
+
+function renderSurveyTable(){
+    const data=getSurveyFiltered();const container=document.getElementById('surveyTableContainer');
+    if(!data.length){container.innerHTML='<p class="no-data" style="padding:20px">No surveys found</p>';return;}
+    let html='<table class="data-table"><thead><tr><th>Date</th><th>Supervisor</th><th>Customer</th><th>Code</th><th>Rating</th><th>Photos</th></tr></thead><tbody>';
+    data.forEach(s=>{
+        const rCls=s.rating>=8?'pct-high':s.rating>=5?'pct-mid':'pct-low';
+        let photoCell=s.photoURLs.length?s.photoURLs.map((u,i)=>'<a href="'+sanitize(u)+'" target="_blank" class="photo-link">Photo '+(i+1)+'</a>').join(''):'<span class="photo-count-badge">0 photos</span>';
+        html+=`<tr><td>${sanitize(s.date)}<br><span style="color:#999;font-size:.8em">${sanitize(s.time)}</span></td><td style="font-weight:500">${sanitize(s.supervisorName)}</td><td style="font-weight:500;color:#333">${sanitize(s.customerName)}</td><td>${sanitize(s.customerCode)}</td><td><span class="pct-badge ${rCls}">${s.rating}/10</span></td><td>${photoCell}</td></tr>`;
+    });
+    html+='</tbody></table>';
+    container.innerHTML=html;
+}
+
+/* ══ DASHBOARD ══ */
+function showDashboard(user){
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('dashboard').classList.add('active');
+    document.getElementById('dashName').textContent=sanitize(user.userName);
+    document.getElementById('dashCode').textContent=sanitize(user.userCode);
+
+    // Filter data for this supervisor
+    mySalesmen=salesmenData.filter(s=>String(s.assignedSUP)==String(user.userCode));
+    const smCodes=mySalesmen.map(s=>String(s.salesmanCode));
+    myMasterData=masterData.filter(r=>smCodes.includes(String(r.salesmanCode)));
+
+    // Summary from DB query (accurate totals)
+    if(window._dashSummary){
+        const ds=window._dashSummary;
+        document.getElementById('sumSalesmen').textContent=ds['TotalSalesmen']||0;
+        document.getElementById('sumTarget').textContent=(+(ds['TotalTGT']||0)).toLocaleString();
+        document.getElementById('sumActual').textContent=(+(ds['TotalACT']||0)).toLocaleString();
+        const growth=+(ds['Growth']||0);
+        document.getElementById('sumPct').textContent=(growth>=0?'+':'')+growth.toFixed(1)+'%';
+        document.getElementById('sumCustomers').textContent=ds['TotalCustomers']||0;
+    } else {
+        const tTgt=mySalesmen.reduce((a,s)=>a+s.tgt,0);
+        const tAct=mySalesmen.reduce((a,s)=>a+s.actCY,0);
+        const uniqueCustomers=[...new Set(myMasterData.map(r=>r.customerCode))];
+        document.getElementById('sumSalesmen').textContent=mySalesmen.length;
+        document.getElementById('sumTarget').textContent=tTgt.toLocaleString();
+        document.getElementById('sumActual').textContent=tAct.toLocaleString();
+        document.getElementById('sumPct').textContent=(tTgt?((tAct-tTgt)/tTgt*100):0).toFixed(1)+'%';
+        document.getElementById('sumCustomers').textContent=uniqueCustomers.length;
+    }
+
+    renderSalesmenTable();
+    populateCustFilters();
+    renderCustTable();
+    loadAllSurveys();
+}
+
+/* ══ EVENTS ══ */
+document.addEventListener('DOMContentLoaded',()=>{
+    ['smFiltSalesman','smFiltRoute'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('change',renderSalesmenTable);});
+    ['filtSalesman','filtSector','filtClass'].forEach(id=>{
+        const el=document.getElementById(id);if(el)el.addEventListener(el.tagName==='INPUT'?'input':'change',()=>{custPage=1;renderCustTable();});
+    });
+    const filtDateEl=document.getElementById('filtDate');
+    if(filtDateEl)filtDateEl.addEventListener('change',()=>{loadCustomersByDate();});
+    ['surveySearch','survFiltSM','survFiltCust','survFiltRating','survSortBy'].forEach(id=>{
+        const el=document.getElementById(id);el.addEventListener(el.tagName==='INPUT'?'input':'change',renderSurveyTable);
+    });
+    // Column sort click handlers
+    document.querySelectorAll('th.sortable').forEach(th=>{
+        th.addEventListener('click',function(){
+            const field=this.dataset.sort;const table=this.dataset.table||'cust';
+            if(table==='sm'){
+                if(smSortField===field)smSortDir=smSortDir==='asc'?'desc':'asc';else{smSortField=field;smSortDir='asc';}
+                renderSalesmenTable();
+            }else{
+                if(custSortField===field)custSortDir=custSortDir==='asc'?'desc':'asc';else{custSortField=field;custSortDir='asc';}
+                renderCustTable();
+            }
+        });
+    });
+});
+
+
+async function loadCustomersByDate(){
+    const dateVal=document.getElementById('filtDate')?document.getElementById('filtDate').value:'';
+    const url=AZURE_API_URL+'?action=customersByDate&code='+encodeURIComponent(currentUser.userCode)+(dateVal?'&date='+encodeURIComponent(dateVal):'');
+    try{
+        const r=await fetch(url);
+        if(r.ok){
+            const data=await r.json();
+            if(data.customerSummary){serverCustomerSummary=data.customerSummary;}
+            if(data.dates&&!allDatesLoaded){
+                allDatesLoaded=true;
+                const sel=document.getElementById('filtDate');
+                if(sel){sel.innerHTML='<option value="">All Dates</option>';
+                data.dates.forEach(d=>{sel.innerHTML+='<option value="'+d+'">'+d+'</option>';});}
+            }
+            custPage=1;renderCustTable();
+        }
+    }catch(e){console.error('Date filter error:',e);}
+}
+
+window.onload=async function(){
+    await loadData();
+    const s=sessionStorage.getItem('loggedInSupervisor');
+    if(s){
+        const u=JSON.parse(s);
+        console.log('Auto-login from session:',u.userCode);
+        // Load fresh data from Apps Script for this user
+        if(AZURE_API_URL){
+            const ok=await loadFromAzure(u.userCode);
+            if(!ok){
+                // Azure API failed — user must re-login
+                console.log('Azure API failed, clearing session');
+                sessionStorage.removeItem('loggedInSupervisor');
+                return;
+            }
+        }
+        const user=usersData.find(x=>String(x.userCode)==String(u.userCode)&&x.role.toLowerCase()==='supervisor');
+        if(user){
+            currentUser=user;showDashboard(user);
+            if(window.location.hash==='#tab-customers')switchTab('customers');
+        } else {
+            sessionStorage.removeItem('loggedInSupervisor');
+        }
+    }
+};
+
+document.getElementById('loginForm').addEventListener('submit',async function(e){
+    e.preventDefault();
+    const name=document.getElementById('userName').value.trim(),code=document.getElementById('userCode').value.trim();
+    if(!name||!code){showError('Please enter both User Name and User ID.');return;}
+    const btn=this.querySelector('button[type="submit"]');btn.disabled=true;btn.textContent='Loading...';
+    // Try Apps Script first — it returns only matching user's data
+    let apiOk=false;
+    if(AZURE_API_URL){apiOk=await loadFromAzure(code);}
+    // Validate: user must match BOTH name AND code
+    const user=usersData.find(u=>u.userName.trim().toLowerCase()===name.trim().toLowerCase()&&String(u.userCode)===code);
+    btn.disabled=false;btn.textContent='Log In';
+    if(!user){showError('Invalid credentials. Check your User Name and User ID.');return;}
+    if(user.role.toLowerCase()!=='supervisor'){showError('Access Denied: This page is for Supervisor role only.');return;}
+    sessionStorage.setItem('loggedInSupervisor',JSON.stringify(user));currentUser=user;showDashboard(user);
+});
+
+function showError(m){const e=document.getElementById('errorMessage');e.textContent=m;e.style.display='block';setTimeout(()=>e.style.display='none',3000);}
+function logout(){sessionStorage.removeItem('loggedInSupervisor');currentUser=null;document.getElementById('loginForm').reset();document.getElementById('dashboard').classList.remove('active');document.getElementById('loginScreen').style.display='flex';}
+</script>
+</body>
+</html>

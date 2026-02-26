@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Role Selection - Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --electric-blue: rgb(20, 46, 255);
+            --warm-cream: rgb(255, 248, 239);
+            --deep-navy: rgb(0, 32, 74);
+            --vivid-red: rgb(255, 0, 61);
+            --sky-cyan: rgb(175, 238, 249);
+            --bg: #f4f6fb;
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px}
+        .container{max-width:920px;width:100%;text-align:center}
+        .logo-img{height:80px;margin-bottom:20px}
+        h1{font-family:'Outfit',sans-serif;font-size:2.8em;font-weight:800;color:var(--deep-navy);letter-spacing:-0.03em;margin-bottom:10px}
+        h1 span{color:var(--electric-blue)}
+        .subtitle{color:#8896a6;margin-bottom:50px;font-size:1.05em}
+        .roles-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+        .role-card{background:#fff;border:2px solid #e8eaf0;border-top:4px solid var(--electric-blue);border-radius:20px;padding:40px 24px;text-align:center;cursor:pointer;transition:all .35s cubic-bezier(.4,0,.2,1);text-decoration:none;color:var(--deep-navy);display:flex;flex-direction:column;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(20,46,255,.04)}
+        .role-card:hover{border-color:var(--electric-blue);transform:translateY(-8px);box-shadow:0 20px 50px rgba(20,46,255,.12)}
+        .role-card:focus{outline:3px solid var(--electric-blue);outline-offset:3px}
+        .role-card:nth-child(3){border-top-color:#43e97b}
+        .role-card:nth-child(4){border-top-color:var(--vivid-red)}
+        .role-icon{font-size:2.8em}
+        .role-title{font-family:'Outfit',sans-serif;font-size:1.25em;font-weight:700;color:var(--deep-navy)}
+        .role-description{font-size:.85em;color:#8896a6}
+        @media(max-width:768px){.roles-grid{grid-template-columns:1fr 1fr}h1{font-size:2em}}
+        @media(max-width:480px){.roles-grid{grid-template-columns:1fr}.container{padding:20px}}
+    </style>
+</head>
+<body>
+    <main class="container">
+        <img src="logo.svg" alt="Logo" class="logo-img">
+        <h1>Welcome to <span>Portal</span></h1>
+        <p class="subtitle">Please select your designation to continue</p>
+        
+        <nav class="roles-grid" aria-label="Role selection">
+            <a href="management.html" class="role-card" aria-label="Management - Executive Dashboard">
+                <div class="role-icon" aria-hidden="true">👔</div>
+                <div class="role-title">Management</div>
+                <div class="role-description">Executive Dashboard</div>
+            </a>
+
+            <a href="bsm.html" class="role-card" aria-label="BSM - Business Sales Manager">
+                <div class="role-icon" aria-hidden="true">📊</div>
+                <div class="role-title">BSM</div>
+                <div class="role-description">Business Sales Manager</div>
+            </a>
+
+            <a href="supervisor.html" class="role-card" aria-label="Supervisor - Team Oversight">
+                <div class="role-icon" aria-hidden="true">👨‍💼</div>
+                <div class="role-title">Supervisor</div>
+                <div class="role-description">Team Oversight</div>
+            </a>
+
+            <a href="salesman.html" class="role-card" aria-label="Salesman - Sales Operations">
+                <div class="role-icon" aria-hidden="true">💼</div>
+                <div class="role-title">Salesman</div>
+                <div class="role-description">Sales Operations</div>
+            </a>
+        </nav>
+
+        <div id="lastUpdate" style="text-align:center;margin-top:40px;padding:15px;background:linear-gradient(135deg,#f0f0f0,#e8e8e8);border-radius:12px;color:#666;font-size:0.9em;display:none">
+            <span style="font-size:1.1em">📅</span> <span id="updateLabel">Checking data status...</span>
+        </div>
+    </main>
+
+    <script>
+    (async()=>{
+        try{
+            const r=await fetch('https://salesap-g4ceg7arc2bkbvfx.centralus-01.azurewebsites.net/api/api?action=lastUpdate');
+            if(r.ok){
+                const data=await r.json();
+                const el=document.getElementById('lastUpdate');
+                const lbl=document.getElementById('updateLabel');
+                if(data.lastDate){
+                    lbl.textContent='Last data update: '+data.lastDate;
+                    el.style.display='block';
+                    // Check if data is from yesterday (= up to date)
+                    const lastDateParsed=new Date(data.lastDate);
+                    const today=new Date();
+                    today.setHours(0,0,0,0);
+                    lastDateParsed.setHours(0,0,0,0);
+                    const diffDays=Math.round((today-lastDateParsed)/(1000*60*60*24));
+                    if(diffDays<=1){
+                        el.style.background='rgba(175,238,249,.25)';
+                        el.style.border='1px solid rgba(175,238,249,.5)';el.style.color='rgb(0,32,74)';
+                        lbl.textContent='✅ Data is up to date — Last sales date: '+data.lastDate;
+                    } else {
+                        el.style.background='rgba(255,0,61,.06)';
+                        el.style.border='1px solid rgba(255,0,61,.15)';el.style.color='rgb(255,0,61)';
+                        lbl.textContent='⚠️ Data needs update — Last sales date: '+data.lastDate+' ('+diffDays+' days ago)';
+                    }
+                }
+            }
+        }catch(e){}
+    })();
+    </script>
+</body>
+</html>

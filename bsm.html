@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BSM Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root{--electric-blue:rgb(20,46,255);--warm-cream:rgb(255,248,239);--deep-navy:rgb(0,32,74);--vivid-red:rgb(255,0,61);--sky-cyan:rgb(175,238,249);--bg:#f4f6fb}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh}
+        #loginScreen{min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;background:linear-gradient(160deg,var(--electric-blue) 0%,var(--deep-navy) 100%)}
+        .login-container{background:#fff;border-radius:24px;padding:50px 45px;box-shadow:0 30px 80px rgba(0,0,0,.3);max-width:440px;width:100%;position:relative;z-index:1}
+        .login-header{text-align:center;margin-bottom:40px}.login-icon{font-size:3em;margin-bottom:10px}
+        .login-header h1{font-family:'Outfit',sans-serif;color:var(--deep-navy);margin-bottom:10px;font-size:1.7em;font-weight:800;letter-spacing:-0.02em}.login-header h1 span{color:var(--electric-blue)}.login-header p{color:#8896a6}
+        .form-group{margin-bottom:22px}.form-group label{display:block;color:var(--deep-navy);font-weight:600;margin-bottom:8px;font-size:.88em}
+        .form-group input{width:100%;padding:14px 18px;border:2px solid #e8eaf0;border-radius:12px;font-size:.95em;font-family:'DM Sans',sans-serif;transition:border-color .3s;color:var(--deep-navy)}
+        .form-group input:focus{outline:none;border-color:var(--electric-blue)}
+        .login-btn{width:100%;padding:16px;background:linear-gradient(135deg,var(--electric-blue),var(--deep-navy));color:#fff;border:none;border-radius:12px;font-size:1.05em;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .3s;margin-top:10px;letter-spacing:.02em}
+        .login-btn:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(20,46,255,.35)}
+        .error-message{background:rgba(255,0,61,.06);color:var(--vivid-red);padding:12px;border-radius:10px;margin-bottom:20px;text-align:center;display:none;border:1px solid rgba(255,0,61,.15)}
+        .back-link{text-align:center;margin-top:20px}.back-link a{color:var(--electric-blue);text-decoration:none;font-weight:600;font-size:.9em}.back-link a:hover{text-decoration:underline}
+
+        #dashboard{display:none;background:var(--bg);min-height:100vh}#dashboard.active{display:block}
+        .dashboard-container{max-width:1400px;margin:0 auto;padding:0}
+        .dashboard-header{background:linear-gradient(135deg,var(--electric-blue) 0%,var(--deep-navy) 100%);padding:35px 40px;display:flex;justify-content:space-between;align-items:center;position:relative;overflow:hidden}
+        .user-info h2{font-family:'Outfit',sans-serif;color:#fff;margin-bottom:5px;font-size:1.8em;font-weight:800;letter-spacing:-0.02em}.user-info h2 span{color:var(--sky-cyan)}.user-info p{color:rgba(255,255,255,.5);font-size:.9em}
+        .logout-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:10px 24px;border-radius:10px;cursor:pointer;font-size:.9em;font-weight:600;transition:all .3s}
+        .logout-btn:hover{background:rgba(255,0,61,.2);border-color:var(--vivid-red)}
+
+        .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px;padding:0 40px 30px;margin-top:-10px;position:relative;z-index:2}
+        .summary-card{background:#fff;border-radius:16px;padding:24px;text-align:center;box-shadow:0 4px 20px rgba(20,46,255,.06);border-left:4px solid var(--electric-blue);transition:all .3s}
+        .summary-card .icon{font-size:1.4em;margin-bottom:8px}.summary-card .value{font-family:'Outfit',sans-serif;font-size:1.9em;font-weight:800;color:var(--deep-navy)}.summary-card .label{color:#8896a6;font-size:.8em;font-weight:600;margin-top:4px}
+
+        .tab-nav{display:flex;gap:4px;background:#fff;margin:0 40px;border-radius:16px 16px 0 0;padding:8px 8px 0;box-shadow:0 -2px 10px rgba(0,0,0,.02)}
+        .tab-btn{flex:1;padding:16px 28px;text-align:center;cursor:pointer;font-size:.9em;font-weight:700;color:#8896a6;border:none;background:transparent;transition:all .2s;border-bottom:3px solid transparent;border-radius:8px 8px 0 0}
+        .tab-btn:hover{background:rgba(20,46,255,.02);color:var(--deep-navy)}
+        .tab-btn.active{color:var(--electric-blue);border-bottom-color:var(--electric-blue);background:rgba(20,46,255,.03)}
+        .tab-content{display:none;background:#fff;margin:0 40px 40px;padding:30px;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(0,0,0,.03)}.tab-content.active{display:block}
+
+        .section-card{background:transparent;border-radius:0;padding:0;margin-bottom:30px;box-shadow:none}
+        .section-card h3{font-family:'Outfit',sans-serif;color:var(--deep-navy);margin-bottom:25px;font-size:1.15em;font-weight:700;display:flex;align-items:center;gap:10px}
+
+        .data-table{width:100%;border-collapse:collapse}
+        .data-table thead{background:linear-gradient(135deg,rgba(20,46,255,.04),rgba(175,238,249,.08))}
+        .data-table th{padding:14px 16px;text-align:left;color:var(--deep-navy);font-weight:700;font-size:.82em;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
+        .data-table td{padding:14px 16px;border-bottom:1px solid #f0f2f8;color:#444;font-size:.9em}
+        .data-table tbody tr:hover{background:rgba(175,238,249,.12)}
+        .total-row{background:linear-gradient(135deg,rgba(20,46,255,.04),rgba(175,238,249,.08));font-weight:700}
+        .total-row td{padding:16px;border-bottom:none;color:var(--deep-navy)}
+        .no-data{text-align:center;padding:40px;color:#8896a6;font-style:italic}
+        .sales-val{color:var(--electric-blue);font-weight:700}
+        .pct-badge{display:inline-block;padding:5px 14px;border-radius:20px;font-weight:700;font-size:.85em}
+        .pct-high{background:linear-gradient(135deg,rgba(20,46,255,.08),rgba(175,238,249,.15));color:var(--electric-blue)}.pct-mid{background:rgba(255,248,239,.8);color:#856404}.pct-low{background:rgba(255,0,61,.08);color:var(--vivid-red)}
+        .mini-progress{width:80px;height:8px;background:#eef0f6;border-radius:4px;display:inline-block;vertical-align:middle;margin-left:8px}
+        .mini-progress-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--electric-blue),var(--sky-cyan))}
+
+        .toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:20px}
+        .toolbar input[type="text"]{padding:11px 18px;border:2px solid #e8eaf0;border-radius:10px;font-size:.9em;min-width:240px;font-family:'DM Sans',sans-serif;color:var(--deep-navy)}
+        .toolbar input:focus,.toolbar select:focus{outline:none;border-color:var(--electric-blue)}
+        .toolbar select{padding:11px 14px;border:2px solid #e8eaf0;border-radius:10px;font-size:.88em;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--deep-navy)}
+        .toolbar label{font-size:.82em;color:#8896a6;font-weight:700}.toolbar-group{display:flex;align-items:center;gap:6px}
+        .group-header-row td{background:linear-gradient(135deg,rgba(20,46,255,.06),rgba(175,238,249,.1));font-weight:700;color:var(--deep-navy);padding:12px;border-bottom:2px solid var(--electric-blue)}
+        .group-subtotal-row td{background:rgba(175,238,249,.06);font-weight:600;color:var(--deep-navy);font-style:italic;border-bottom:2px solid #e8eaf0}
+
+        @media(max-width:768px){.dashboard-header{flex-direction:column;gap:20px;text-align:center}.summary-grid{grid-template-columns:1fr 1fr}.toolbar{flex-direction:column;align-items:stretch}.toolbar input[type="text"]{min-width:auto;width:100%}.tab-btn{font-size:.9em;padding:15px 10px}}
+        th.sortable{cursor:pointer;user-select:none;position:relative;padding-right:20px !important;}
+        th.sortable::after{content:'⇅';position:absolute;right:4px;top:50%;transform:translateY(-50%);opacity:0.3;font-size:0.75em;}
+        th.sortable.sort-asc::after{content:'▲';opacity:0.8;color:var(--electric-blue);}
+        th.sortable.sort-desc::after{content:'▼';opacity:0.8;color:var(--electric-blue);}
+        th.sortable:hover{background:rgba(20,46,255,0.04);}
+        .cust-summary-row{cursor:pointer;transition:background 0.15s;}
+        .cust-summary-row:hover{background:rgba(175,238,249,.12) !important;}
+        .cust-summary-row td:first-child{text-align:center;font-size:0.85em;color:#aaa;}
+        .var-positive{color:var(--electric-blue);font-weight:700;}
+        .var-negative{color:var(--vivid-red);font-weight:700;}
+    </style>
+</head>
+<body>
+
+<div id="loginScreen">
+    <div class="login-container">
+        <div class="login-header"><img src="logo.svg" alt="Logo" style="height:60px;margin-bottom:10px"><div class="login-icon">📊</div><h1>BSM Login</h1><p>Enter your credentials to continue</p></div>
+        <div id="errorMessage" class="error-message"></div>
+        <form id="loginForm">
+            <div class="form-group"><label for="userName">User Name</label><input type="text" id="userName" placeholder="Enter your Username" required></div>
+            <div class="form-group"><label for="userCode">User ID</label><input type="text" id="userCode" placeholder="Enter your User Code" required></div>
+            <button type="submit" class="login-btn">Log In</button>
+        </form>
+        <div class="back-link"><a href="index.html">← Back to Role Selection</a></div>
+    </div>
+</div>
+
+<div id="dashboard">
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <div class="user-info"><h2>Welcome, <span id="dashName"></span>!</h2><p>BSM Code: <span id="dashCode"></span></p></div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+
+        <div class="summary-grid">
+            <div class="summary-card"><div class="icon">👨‍💼</div><div class="value" id="sumSPV">0</div><div class="label">Supervisors</div></div>
+            <div class="summary-card"><div class="icon">👥</div><div class="value" id="sumSM">0</div><div class="label">Salesmen</div></div>
+            <div class="summary-card"><div class="icon">🎯</div><div class="value" id="sumTgt">0</div><div class="label">Total Target</div></div>
+            <div class="summary-card"><div class="icon">💰</div><div class="value" id="sumAct">0</div><div class="label">Total Actual</div></div>
+            <div class="summary-card"><div class="icon">📊</div><div class="value" id="sumPct">0%</div><div class="label">Overall Growth</div></div>
+            <div class="summary-card"><div class="icon">🏪</div><div class="value" id="sumCust">0</div><div class="label">Customers</div></div>
+        </div>
+
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('supervisors')">👨‍💼 My Supervisors</button>
+            <button class="tab-btn" onclick="switchTab('customers')">🏪 All Sales Data</button>
+        </div>
+
+        <!-- TAB 1: Supervisors -->
+        <div id="tab-supervisors" class="tab-content active">
+            <div class="section-card">
+                <h3>👨‍💼 Supervisors Performance</h3>
+                <table class="data-table" id="spvTable">
+                    <thead><tr><th class="sortable" data-sort="supervisorCode" data-table="sup">Code</th><th class="sortable" data-sort="supervisor" data-table="sup">Supervisor</th><th class="sortable" data-sort="routes" data-table="sup">Routes</th><th class="sortable" data-sort="tgt" data-table="sup">Target</th><th class="sortable" data-sort="actCY" data-table="sup">ACT-CY</th><th class="sortable" data-sort="pctTgt" data-table="sup">%TGT</th><th>Progress</th></tr></thead>
+                    <tbody id="spvTableBody"><tr><td colspan="7" class="no-data">Loading…</td></tr></tbody>
+                    <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="spvTotRoutes">0</td><td id="spvTotTgt">0</td><td id="spvTotAct">0</td><td id="spvTotPct">0%</td><td></td></tr></tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- Supervisor Detail Popup -->
+        <div id="spvPopup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,20,64,0.6);backdrop-filter:blur(8px);z-index:1000;justify-content:center;align-items:center">
+            <div style="background:#fff;border-radius:20px;padding:35px;max-width:820px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 30px 80px rgba(0,0,0,.2)">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+                    <h3 id="spvPopupTitle" style="font-family:Outfit,sans-serif;color:rgb(0,32,74);font-size:1.3em;font-weight:800">Supervisor Detail</h3>
+                    <button onclick="closeSpvPopup()" style="background:none;border:2px solid #e8eaf0;width:36px;height:36px;border-radius:10px;font-size:1.2em;cursor:pointer;color:#8896a6">✕</button>
+                </div>
+                <table class="data-table">
+                    <thead><tr><th>Salesman Code</th><th>Salesman</th><th>Route</th><th>Target</th><th>ACT-CY</th><th>%TGT</th><th>Progress</th></tr></thead>
+                    <tbody id="spvPopupBody"><tr><td colspan="7" class="no-data">Loading…</td></tr></tbody>
+                    <tfoot><tr class="total-row"><td colspan="3">Total</td><td id="popTotTgt">0</td><td id="popTotAct">0</td><td id="popTotPct">0%</td><td></td></tr></tfoot>
+                </table>
+            </div>
+        </div>
+
+
+        <!-- TAB 3: All Customers (Summary → Click for Detail) -->
+        <div id="tab-customers" class="tab-content">
+            <div class="section-card">
+                <h3>🏪 All Customer Sales</h3>
+                <div class="toolbar">
+                    <input type="text" id="custSearch" placeholder="🔍 Search by name, code, salesman, sector, class..." oninput="clearTimeout(this._t);this._t=setTimeout(()=>{custPage=1;renderCustTable();},300)">
+                    <div class="toolbar-group"><label>Salesman:</label><select id="filtSM"><option value="">All</option></select></div>
+                    <div class="toolbar-group"><label>Sector:</label><select id="filtSector"><option value="">All</option></select></div>
+                    <div class="toolbar-group"><label>Class:</label><select id="filtClass"><option value="">All</option></select></div>
+                    <div class="toolbar-group"><label>Date:</label><select id="filtDate"><option value="">All Dates</option></select></div>
+                </div>
+                <table class="data-table" id="custTable">
+                    <thead><tr><th style="width:30px"></th><th class="sortable" data-sort="code" data-table="cust">Code</th><th class="sortable" data-sort="customer" data-table="cust">Customer</th><th class="sortable" data-sort="salesman" data-table="cust">Salesman</th><th class="sortable" data-sort="routeCode" data-table="cust">Route</th><th class="sortable" data-sort="sector" data-table="cust">Sector</th><th class="sortable" data-sort="cls" data-table="cust">Class</th><th class="sortable" data-sort="totalCY" data-table="cust">ACT-CY</th><th class="sortable" data-sort="totalLY" data-table="cust">ACT-LY</th><th class="sortable" data-sort="varPct" data-table="cust">%YoY Growth</th></tr></thead>
+                    <tbody id="custTableBody"><tr><td colspan="12" class="no-data">Loading…</td></tr></tbody>
+                    <tfoot><tr class="total-row"><td colspan="7">Total</td><td class="sales-val" id="custTotCY">0</td><td class="sales-val" id="custTotLY">0</td><td></td></tr></tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const AZURE_API_URL = 'https://salesap-g4ceg7arc2bkbvfx.centralus-01.azurewebsites.net/api/api';
+
+let usersData=[],salesmenData=[],supData=[],bsmData=[],masterData=[],serverCustomerSummary=null;
+let currentUser=null,mySupervisors=[],mySalesmen=[],myMasterData=[];
+function sanitize(s){const d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
+function toNum(v){const n=Number(v);return isNaN(n)?0:n;}
+
+function applyApiData(data){
+    if(data.user)usersData=[{userCode:String(data.user['User Code']||''),userName:data.user['User Name']||'',role:(data.user.Role||data.user.role||'').trim()}];
+    if(data.salesmenData)salesmenData=data.salesmenData.map(r=>({salesmanCode:String(r['Salesman Code']||''),salesman:r['Salesman']||'',assignedSUP:String(r['Assigned SUP']||''),routeCode:String(r['Route Code']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])*100}));
+    if(data.supData)supData=data.supData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),supervisor:r['Supervisor']||'',routeCode:String(r['Route Code']||''),assignedBSM:String(r['AssignedBSM']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])*100}));
+    if(data.bsmData)bsmData=data.bsmData.map(r=>({bsmCode:String(r['BSM Code']||''),branchManager:r['Branch Manager']||'',sector:r['Sector']||'',branch:r['Branch']||'',tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])*100}));
+    if(data.masterData)masterData=data.masterData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),branchManager:r['Branch Manager']||'',routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',region:r['Region']||'',branch:r['Branch']||'',brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',product:r['Product']||'',date:String(r['Date']||'').substring(0,10),achCYP:toNum(r['ACH CY (P)']),achLYP:toNum(r['ACH LY (P)']),actCY:toNum(r['ACT-CY']),actLY:toNum(r['ACT-LY'])}));
+    if(data.customerSummary)serverCustomerSummary=data.customerSummary;
+    if(data.dates)window._apiDates=data.dates;
+    if(data.dashSummary)window._dashSummary=data.dashSummary;
+    if(data.masterDataTotal)console.log('Server has',data.masterDataTotal,'master rows (not transferred)');
+    return true;
+}
+
+async function loadFromAzure(userCode){
+    if(!AZURE_API_URL)return false;
+    // Client cache disabled — server handles caching for 800K+ rows
+    try{
+        const url=AZURE_API_URL+'?action=login&code='+encodeURIComponent(userCode);
+        const r=await fetch(url);if(!r.ok)return false;
+        const data=await r.json();if(data.error)return false;
+        applyApiData(data);
+        console.log('Azure API: loaded',supData.length,'SUP,',salesmenData.length,'SM,',masterData.length,'master');
+        return true;
+    }catch(e){console.error('Azure API error:',e);return false;}
+}
+
+async function loadData(){
+    // No fallback data — Apps Script is the only data source
+    usersData=[];salesmenData=[];supData=[];bsmData=[];masterData=[];
+}
+
+let custTabRendered=false;
+function switchTab(t){
+    ['supervisors','customers'].forEach(n=>{
+        document.getElementById('tab-'+n).classList.toggle('active',n===t);
+    });
+    document.querySelectorAll('.tab-btn').forEach((b,i)=>{b.classList.toggle('active',i===['supervisors','customers'].indexOf(t));});
+    if(t==='customers'&&!custTabRendered){custTabRendered=true;loadCustomersByDate();}
+}
+
+/* ══ COLUMN SORT STATE ══ */
+let supSortField='',supSortDir='asc';
+let custPage=1;const CUST_PAGE_SIZE=50;
+let custSortField='',custSortDir='asc';
+
+/* ══ TAB 1: Supervisors (from vw_SupervisorSummary) ══ */
+let spvSummaryData=[];
+async function loadSupervisorSummary(){
+    try{
+        const url=AZURE_API_URL+'?action=supervisorSummary&code='+encodeURIComponent(currentUser.userCode);
+        const r=await fetch(url);
+        if(r.ok){const data=await r.json();spvSummaryData=data.rows||[];renderSPVTable();}
+    }catch(e){console.error('Supervisor summary error:',e);}
+}
+
+function renderSPVTable(){
+    const tbody=document.getElementById('spvTableBody');
+    let data=[...spvSummaryData];
+    if(supSortField){const m=supSortDir==='desc'?-1:1;data.sort((a,b)=>{const va=a[supSortField]||0,vb=b[supSortField]||0;if(typeof va==='number')return(va-vb)*m;return String(va||'').localeCompare(String(vb||''))*m;});}
+    if(!data.length){tbody.innerHTML='<tr><td colspan="7" class="no-data">No supervisors found</td></tr>';return;}
+    let html='',tT=0,tA=0,tR=0;
+    data.forEach(s=>{
+        const code=s['Supervisor Code']||'';
+        const name=s['Supervisor']||code;
+        const routes=s['Routes']||0;
+        const tgt=+(s['TGT']||0);
+        const act=+(s['ACT-CY']||0);
+        const pct=+(s['PctTGT']||0);
+        const achPct=tgt?(act/tgt*100):0;
+        const cls=pct>=0?'pct-high':'pct-low';
+        tT+=tgt;tA+=act;
+        html+=`<tr class="cust-summary-row" onclick="openSpvDetail('${sanitize(code)}','${sanitize(name)}')">
+            <td>${sanitize(code)}</td><td style="font-weight:600;color:#333">${sanitize(name)}</td>
+            <td style="text-align:center">${routes}</td><td>${tgt.toLocaleString()}</td>
+            <td class="sales-val">${act.toLocaleString()}</td>
+            <td><span class="pct-badge ${cls}">${(pct>=0?'+':'')+pct.toFixed(1)}%</span></td>
+            <td><div class="mini-progress"><div class="mini-progress-fill" style="width:${Math.min(achPct,100)}%"></div></div></td></tr>`;
+    });
+    tbody.innerHTML=html;
+    const oP=tT?((tA-tT)/tT*100):0;
+    document.getElementById('spvTotRoutes').textContent=data.reduce((a,s)=>a+(s['Routes']||0),0);
+    document.getElementById('spvTotTgt').textContent=tT.toLocaleString();
+    document.getElementById('spvTotAct').textContent=tA.toLocaleString();
+    document.getElementById('spvTotPct').textContent=(oP>=0?'+':'')+oP.toFixed(1)+'%';
+    document.querySelectorAll('th.sortable[data-table="sup"]').forEach(th=>{th.classList.remove('sort-asc','sort-desc');if(th.dataset.sort===supSortField)th.classList.add('sort-'+supSortDir);});
+}
+
+async function openSpvDetail(code,name){
+    document.getElementById('spvPopupTitle').textContent=name+' ('+code+') — Route Details';
+    document.getElementById('spvPopupBody').innerHTML='<tr><td colspan="7" class="no-data">Loading…</td></tr>';
+    document.getElementById('spvPopup').style.display='flex';
+    try{
+        const url=AZURE_API_URL+'?action=supervisorDetail&supervisor='+encodeURIComponent(code);
+        const r=await fetch(url);
+        if(r.ok){
+            const data=await r.json();
+            const rows=data.rows||[];
+            if(!rows.length){document.getElementById('spvPopupBody').innerHTML='<tr><td colspan="7" class="no-data">No route data</td></tr>';return;}
+            let html='',tT=0,tA=0;
+            rows.forEach(r=>{
+                const tgt=+(r['TGT']||0),act=+(r['ACT-CY']||0);
+                const pct=tgt?((act-tgt)/tgt*100):0;
+                const achPct=tgt?(act/tgt*100):0;
+                const cls=pct>=0?'pct-high':'pct-low';
+                tT+=tgt;tA+=act;
+                html+=`<tr><td>${sanitize(r['Salesman Code']||'')}</td><td style="font-weight:600">${sanitize(r['Salesman']||'')}</td>
+                    <td>${sanitize(r['Route Code']||'')}</td><td>${tgt.toLocaleString()}</td>
+                    <td class="sales-val">${act.toLocaleString()}</td>
+                    <td><span class="pct-badge ${cls}">${(pct>=0?'+':'')+pct.toFixed(1)}%</span></td>
+                    <td><div class="mini-progress"><div class="mini-progress-fill" style="width:${Math.min(achPct,100)}%"></div></div></td></tr>`;
+            });
+            document.getElementById('spvPopupBody').innerHTML=html;
+            const oP=tT?((tA-tT)/tT*100):0;
+            document.getElementById('popTotTgt').textContent=tT.toLocaleString();
+            document.getElementById('popTotAct').textContent=tA.toLocaleString();
+            document.getElementById('popTotPct').textContent=(oP>=0?'+':'')+oP.toFixed(1)+'%';
+        }
+    }catch(e){console.error('Supervisor detail error:',e);}
+}
+function closeSpvPopup(){document.getElementById('spvPopup').style.display='none';}
+
+
+
+/* ══ TAB 3: Customer Summary (click to detail) ══ */
+function getCustomerSummaries(){
+    const q=document.getElementById('custSearch')?document.getElementById('custSearch').value.toLowerCase():'';
+    const fSM=document.getElementById('filtSM')?document.getElementById('filtSM').value:(document.getElementById('filtSalesman')?document.getElementById('filtSalesman').value:'');
+    const fSec=document.getElementById('filtSector')?document.getElementById('filtSector').value:'';
+    const fCls=document.getElementById('filtClass')?document.getElementById('filtClass').value:'';
+    let summaries=[];
+    if(serverCustomerSummary&&serverCustomerSummary.length){
+        summaries=serverCustomerSummary.map(c=>({
+            code:String(c['Customer Code']||'').trim(),
+            name:c['Customer']||'',
+            salesman:c['Salesman']||String(c['Salesman Code']||''),
+            salesmanCode:String(c['Salesman Code']||'').trim(),
+            routeCode:String(c['Route Code']||'').trim(),
+            sector:c['Sector']||'',
+            cls:c['Class']||'',
+            totalCY:+(c['TotalCY']||0),
+            totalLY:+(c['TotalLY']||0),
+            varPct:+(c['VarPct']||0)
+        }));
+    }
+    if(fSM)summaries=summaries.filter(c=>c.salesmanCode===fSM);
+    if(fSec)summaries=summaries.filter(c=>c.sector===fSec);
+    if(fCls)summaries=summaries.filter(c=>c.cls===fCls);
+    if(q)summaries=summaries.filter(c=>[c.code,c.name,c.salesman,c.routeCode,c.sector,c.cls].some(v=>String(v).toLowerCase().includes(q)));
+    if(custSortField){
+        const m=custSortDir==='desc'?-1:1;
+        summaries.sort((a,b)=>{let va=a[custSortField],vb=b[custSortField];if(custSortField==='customer'){va=a.name;vb=b.name;}if(typeof va==='number')return(va-vb)*m;return String(va||'').localeCompare(String(vb||''))*m;});
+    }
+    return summaries;
+}
+
+async function openCustomerDetail(code){
+    const summaries=getCustomerSummaries();
+    const cust=summaries.find(c=>c.code===code);if(!cust)return;
+    try{
+        const url=AZURE_API_URL+'?action=customerDetail&code='+encodeURIComponent(currentUser.userCode)+'&customer='+encodeURIComponent(code);
+        const r=await fetch(url);
+        if(r.ok){
+            const data=await r.json();
+            const rows=(data.rows||[]).map(r=>({
+                supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),
+                routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),
+                customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',
+                brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',
+                product:r['Product']||'',date:String(r['Date']||'').substring(0,10),
+                achCYP:+(r['ACH CY (P)'])||0,achLYP:+(r['ACH LY (P)'])||0,
+                actCY:+(r['ACT-CY'])||0,actLY:+(r['ACT-LY'])||0
+            }));
+            sessionStorage.setItem('customerDetailInfo',JSON.stringify({
+                customerCode:cust.code,customerName:cust.name,salesman:cust.salesman,
+                salesmanCode:cust.salesmanCode,routeCode:cust.routeCode,
+                spvName:currentUser.userName,spvCode:currentUser.userCode,rows:rows
+            }));
+            window.open('customer_detail.html','_blank');
+        }
+    }catch(e){console.error('Customer detail error:',e);}
+}
+
+function renderCustTable(){
+    const allSummaries=getCustomerSummaries();
+    const tbody=document.getElementById('custTableBody');
+    const total=allSummaries.length;
+    const totalPages=Math.ceil(total/CUST_PAGE_SIZE);
+    if(custPage>totalPages)custPage=totalPages||1;
+    if(!total){tbody.innerHTML='<tr><td colspan="12" class="no-data">No data found</td></tr>';document.getElementById('custTotCY').textContent='0';document.getElementById('custTotLY').textContent='0';updatePagination(0,0);return;}
+    // Totals from ALL filtered data
+    let tCY=0,tLY=0;
+    allSummaries.forEach(c=>{tCY+=c.totalCY;tLY+=c.totalLY;});
+    // Paginate
+    const start=(custPage-1)*CUST_PAGE_SIZE;
+    const pageData=allSummaries.slice(start,start+CUST_PAGE_SIZE);
+    let html='';
+    pageData.forEach(c=>{
+        const varCls=c.varPct>=0?'var-positive':'var-negative';
+        const varStr=(c.varPct>=0?'+':'')+c.varPct.toFixed(1)+'%';
+        html+=`<tr class="cust-summary-row" onclick="openCustomerDetail('${sanitize(c.code)}')">
+            <td>🔗</td><td style="font-weight:600">${sanitize(c.code)}</td><td style="font-weight:600;color:#333">${sanitize(c.name)}</td>
+            <td>${sanitize(c.salesman)}</td><td>${sanitize(c.routeCode)}</td>
+            <td>${sanitize(c.sector)}</td><td>${sanitize(c.cls)}</td>
+            <td class="sales-val">${c.totalCY.toLocaleString()}</td><td>${c.totalLY.toLocaleString()}</td><td><span class="${varCls}">${varStr}</span></td></tr>`;
+    });
+    tbody.innerHTML=html;
+    document.getElementById('custTotCY').textContent=tCY.toLocaleString();document.getElementById('custTotLY').textContent=tLY.toLocaleString();
+    document.querySelectorAll('th.sortable[data-table="cust"]').forEach(th=>{th.classList.remove('sort-asc','sort-desc');if(th.dataset.sort===custSortField)th.classList.add('sort-'+custSortDir);});
+    updatePagination(total,totalPages);
+}
+function updatePagination(total,totalPages){
+    let pg=document.getElementById('custPagination');
+    if(!pg){pg=document.createElement('div');pg.id='custPagination';pg.style.cssText='display:flex;align-items:center;justify-content:center;gap:12px;padding:15px;font-size:.9em;';
+    document.getElementById('custTable').parentNode.appendChild(pg);}
+    if(!total){pg.innerHTML='';return;}
+    pg.innerHTML=`<button onclick="custPage=1;renderCustTable()" ${custPage<=1?'disabled':''} style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer">«</button>`+
+    `<button onclick="custPage--;renderCustTable()" ${custPage<=1?'disabled':''} style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer">‹</button>`+
+    `<span style="font-weight:600">Page ${custPage} of ${totalPages}</span><span style="color:#888">(${total} customers)</span>`+
+    `<button onclick="custPage++;renderCustTable()" ${custPage>=totalPages?'disabled':''} style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer">›</button>`+
+    `<button onclick="custPage=${totalPages};renderCustTable()" ${custPage>=totalPages?'disabled':''} style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer">»</button>`;
+}
+
+function populateFilters(){
+    const fill=(id,vals,lbl)=>{const el=document.getElementById(id);if(!el)return;el.innerHTML=`<option value="">All ${lbl}</option>`;vals.forEach(v=>{el.innerHTML+=`<option value="${sanitize(v[0])}">${sanitize(v[1])}</option>`;});};
+    const spvUniq=[...new Map(mySupervisors.map(s=>[s.supervisorCode,s])).values()];
+    fill('filtSM',mySalesmen.map(s=>[String(s.salesmanCode),`${s.salesman} (${s.salesmanCode})`]),'Salesmen');
+    fill('filtSalesman',mySalesmen.map(s=>[String(s.salesmanCode),`${s.salesman} (${s.salesmanCode})`]),'Salesmen');
+    const src=serverCustomerSummary||[];
+    fill('filtSector',[...new Set(src.map(r=>(r['Sector']||'').trim()).filter(v=>v))].sort().map(v=>[v,v]),'Sectors');
+    fill('filtClass',[...new Set(src.map(r=>(r['Class']||'').trim()).filter(v=>v))].sort().map(v=>[v,v]),'Classes');
+}
+
+function showDashboard(user){
+    document.getElementById('loginScreen').style.display='none';document.getElementById('dashboard').classList.add('active');
+    document.getElementById('dashName').textContent=sanitize(user.userName);document.getElementById('dashCode').textContent=sanitize(user.userCode);
+
+    mySupervisors=supData.filter(s=>String(s.assignedBSM)==String(user.userCode));
+    const spvCodes=[...new Set(mySupervisors.map(s=>s.supervisorCode))];
+    const smFromSup=salesmenData.filter(s=>spvCodes.includes(String(s.assignedSUP)));
+    const smDirect=salesmenData.filter(s=>String(s.assignedSUP)==String(user.userCode));
+    const smMap={};
+    [...smFromSup,...smDirect].forEach(s=>{smMap[String(s.salesmanCode)]=s;});
+    mySalesmen=Object.values(smMap);
+
+    // Summary from DB query (accurate totals including direct routes)
+    if(window._dashSummary){
+        const ds=window._dashSummary;
+        document.getElementById('sumSPV').textContent=ds['TotalSUP']||0;
+        document.getElementById('sumSM').textContent=ds['TotalSalesmen']||0;
+        document.getElementById('sumTgt').textContent=(+(ds['TotalTGT']||0)).toLocaleString();
+        document.getElementById('sumAct').textContent=(+(ds['TotalACT']||0)).toLocaleString();
+        const growth=+(ds['Growth']||0);
+        document.getElementById('sumPct').textContent=(growth>=0?'+':'')+growth.toFixed(1)+'%';
+        document.getElementById('sumCust').textContent=ds['TotalCustomers']||0;
+    } else {
+        const tT=mySalesmen.reduce((a,s)=>a+s.tgt,0);
+        const tA=mySalesmen.reduce((a,s)=>a+s.actCY,0);
+        const growth=tT?((tA-tT)/tT*100):0;
+        document.getElementById('sumSPV').textContent=spvCodes.length;
+        document.getElementById('sumSM').textContent=mySalesmen.length;
+        document.getElementById('sumTgt').textContent=tT.toLocaleString();
+        document.getElementById('sumAct').textContent=tA.toLocaleString();
+        document.getElementById('sumPct').textContent=(growth>=0?'+':'')+growth.toFixed(1)+'%';
+        document.getElementById('sumCust').textContent=serverCustomerSummary&&serverCustomerSummary.length?serverCustomerSummary.length:0;
+    }
+
+    // Load dates for filter
+    if(window._apiDates&&window._apiDates.length){
+        const sel=document.getElementById('filtDate');
+        if(sel){sel.innerHTML='<option value="">All Dates</option>';
+        window._apiDates.forEach(d=>{sel.innerHTML+='<option value="'+d+'">'+d+'</option>';});}
+        allDatesLoaded=true;
+    }
+
+    populateFilters();
+    loadSupervisorSummary();
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+    ['filtSM','filtSector','filtClass'].forEach(id=>{
+        const el=document.getElementById(id);if(el)el.addEventListener(el.tagName==='INPUT'?'input':'change',()=>{custPage=1;renderCustTable();});
+    });
+    const filtDateEl=document.getElementById('filtDate');
+    if(filtDateEl)filtDateEl.addEventListener('change',()=>{loadCustomersByDate();});
+    document.querySelectorAll('th.sortable').forEach(th=>{
+        th.addEventListener('click',function(){
+            const f=this.dataset.sort,t=this.dataset.table||'cust';
+            if(t==='sup'){if(supSortField===f)supSortDir=supSortDir==='asc'?'desc':'asc';else{supSortField=f;supSortDir='asc';}renderSPVTable();}
+            else{if(custSortField===f)custSortDir=custSortDir==='asc'?'desc':'asc';else{custSortField=f;custSortDir='asc';}renderCustTable();}
+        });
+    });
+});
+
+
+async function loadCustomersByDate(){
+    const dateVal=document.getElementById('filtDate')?document.getElementById('filtDate').value:'';
+    const url=AZURE_API_URL+'?action=customersByDate&code='+encodeURIComponent(currentUser.userCode)+(dateVal?'&date='+encodeURIComponent(dateVal):'');
+    try{
+        const r=await fetch(url);
+        if(r.ok){
+            const data=await r.json();
+            if(data.customerSummary){serverCustomerSummary=data.customerSummary;}
+            if(data.dates&&!allDatesLoaded){
+                allDatesLoaded=true;
+                const sel=document.getElementById('filtDate');
+                if(sel){sel.innerHTML='<option value="">All Dates</option>';
+                data.dates.forEach(d=>{sel.innerHTML+='<option value="'+d+'">'+d+'</option>';});}
+            }
+            custPage=1;renderCustTable();
+        }
+    }catch(e){console.error('Date filter error:',e);}
+}
+
+window.onload=async function(){await loadData();const s=sessionStorage.getItem('loggedInBSM');if(s){const u=JSON.parse(s);
+    if(AZURE_API_URL){const ok=await loadFromAzure(u.userCode);if(!ok){sessionStorage.removeItem('loggedInBSM');return;}}
+    const user=usersData.find(x=>String(x.userCode)==String(u.userCode)&&x.role.toLowerCase()==='bsm');if(user){currentUser=user;showDashboard(user);}else sessionStorage.removeItem('loggedInBSM');}};
+
+document.getElementById('loginForm').addEventListener('submit',async function(e){e.preventDefault();
+    const name=document.getElementById('userName').value.trim(),code=document.getElementById('userCode').value.trim();
+    if(!name||!code){showError('Please enter both User Name and User ID.');return;}
+    const btn=this.querySelector('button[type="submit"]');btn.disabled=true;btn.textContent='Loading...';
+    if(AZURE_API_URL){await loadFromAzure(code);}
+    const user=usersData.find(u=>u.userName.trim().toLowerCase()===name.trim().toLowerCase()&&String(u.userCode)===code);
+    btn.disabled=false;btn.textContent='Log In';
+    if(!user){showError('Invalid credentials. Check your User Name and User ID.');return;}if(user.role.toLowerCase()!=='bsm'){showError('Access Denied: This page is for BSM role only.');return;}
+    sessionStorage.setItem('loggedInBSM',JSON.stringify(user));currentUser=user;showDashboard(user);});
+
+function showError(m){const e=document.getElementById('errorMessage');e.textContent=m;e.style.display='block';setTimeout(()=>e.style.display='none',3000);}
+function logout(){sessionStorage.removeItem('loggedInBSM');currentUser=null;document.getElementById('loginForm').reset();document.getElementById('dashboard').classList.remove('active');document.getElementById('loginScreen').style.display='flex';}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSpvPopup();});
+document.getElementById('spvPopup').addEventListener('click',e=>{if(e.target.id==='spvPopup')closeSpvPopup();});
+</script>
+</body>
+</html>
