@@ -74,6 +74,12 @@
         .cust-summary-row td:first-child{text-align:center;font-size:0.85em;color:#aaa;}
         .var-positive{color:var(--electric-blue);font-weight:700;}
         .var-negative{color:var(--vivid-red);font-weight:700;}
+            .clear-btn{padding:8px 16px;border:2px solid #e8eaf0;border-radius:10px;background:#fff;color:#8896a6;font-size:.82em;font-weight:700;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;white-space:nowrap}
+        .clear-btn:hover{border-color:var(--vivid-red);color:var(--vivid-red);background:rgba(255,0,61,.04)}
+        .clear-btn.clear-all{background:rgba(255,0,61,.04);color:var(--vivid-red);border-color:rgba(255,0,61,.2)}
+        .clear-btn.clear-all:hover{background:rgba(255,0,61,.1);border-color:var(--vivid-red)}
+        .clear-single{padding:4px 8px;border:1px solid #e8eaf0;border-radius:6px;background:#fff;color:#aaa;font-size:.75em;cursor:pointer;margin-left:4px;transition:all .2s}
+        .clear-single:hover{border-color:var(--vivid-red);color:var(--vivid-red)}
     </style>
 </head>
 <body>
@@ -146,10 +152,11 @@
                 <h3>🏪 All Customer Sales</h3>
                 <div class="toolbar">
                     <input type="text" id="custSearch" placeholder="🔍 Search by name, code, salesman, sector, class..." oninput="clearTimeout(this._t);this._t=setTimeout(()=>{custPage=1;renderCustTable();},300)">
-                    <div class="toolbar-group"><label>Salesman:</label><select id="filtSM"><option value="">All</option></select></div>
-                    <div class="toolbar-group"><label>Sector:</label><select id="filtSector"><option value="">All</option></select></div>
-                    <div class="toolbar-group"><label>Class:</label><select id="filtClass"><option value="">All</option></select></div>
-                    <div class="toolbar-group"><label>Date:</label><select id="filtDate"><option value="">All Dates</option></select></div>
+                    <div class="toolbar-group"><label>Salesman:</label><select id="filtSM"><option value="">All</option></select><button class="clear-single" onclick="document.getElementById('filtSM').value='';custPage=1;renderCustTable();">✕</button></div>
+                    <div class="toolbar-group"><label>Sector:</label><select id="filtSector"><option value="">All</option></select><button class="clear-single" onclick="document.getElementById('filtSector').value='';custPage=1;renderCustTable();">✕</button></div>
+                    <div class="toolbar-group"><label>Class:</label><select id="filtClass"><option value="">All</option></select><button class="clear-single" onclick="document.getElementById('filtClass').value='';custPage=1;renderCustTable();">✕</button></div>
+                    <div class="toolbar-group"><label>Date:</label><select id="filtDate"><option value="">All Dates</option></select><button class="clear-single" onclick="document.getElementById('filtDate').value='';loadCustomersByDate();">✕</button></div>
+                    <button class="clear-btn clear-all" onclick="clearAllBSMFilters()">🗑 Clear All</button>
                 </div>
                 <table class="data-table" id="custTable">
                     <thead><tr><th style="width:30px"></th><th class="sortable" data-sort="code" data-table="cust">Code</th><th class="sortable" data-sort="customer" data-table="cust">Customer</th><th class="sortable" data-sort="salesman" data-table="cust">Salesman</th><th class="sortable" data-sort="routeCode" data-table="cust">Route</th><th class="sortable" data-sort="sector" data-table="cust">Sector</th><th class="sortable" data-sort="cls" data-table="cust">Class</th><th class="sortable" data-sort="totalCY" data-table="cust">ACT-CY</th><th class="sortable" data-sort="totalLY" data-table="cust">ACT-LY</th><th class="sortable" data-sort="varPct" data-table="cust">%YoY Growth</th></tr></thead>
@@ -391,6 +398,14 @@ function updatePagination(total,totalPages){
     `<button onclick="custPage=${totalPages};renderCustTable()" ${custPage>=totalPages?'disabled':''} style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer">»</button>`;
 }
 
+function clearAllBSMFilters(){
+    document.getElementById('custSearch').value='';
+    document.getElementById('filtSM').value='';
+    document.getElementById('filtSector').value='';
+    document.getElementById('filtClass').value='';
+    document.getElementById('filtDate').value='';
+    custPage=1;loadCustomersByDate();
+}
 function populateFilters(){
     const fill=(id,vals,lbl)=>{const el=document.getElementById(id);if(!el)return;el.innerHTML=`<option value="">All ${lbl}</option>`;vals.forEach(v=>{el.innerHTML+=`<option value="${sanitize(v[0])}">${sanitize(v[1])}</option>`;});};
     const spvUniq=[...new Map(mySupervisors.map(s=>[s.supervisorCode,s])).values()];
