@@ -105,6 +105,12 @@
         th.sortable.sort-asc::after{content:'▲';opacity:0.8;color:var(--electric-blue);}
         th.sortable.sort-desc::after{content:'▼';opacity:0.8;color:var(--electric-blue);}
         th.sortable:hover{background:rgba(20,46,255,0.04);}
+            .clear-btn{padding:8px 16px;border:2px solid #e8eaf0;border-radius:10px;background:#fff;color:#8896a6;font-size:.82em;font-weight:700;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;white-space:nowrap}
+        .clear-btn:hover{border-color:var(--vivid-red);color:var(--vivid-red);background:rgba(255,0,61,.04)}
+        .clear-btn.clear-all{background:rgba(255,0,61,.04);color:var(--vivid-red);border-color:rgba(255,0,61,.2)}
+        .clear-btn.clear-all:hover{background:rgba(255,0,61,.1);border-color:var(--vivid-red)}
+        .clear-single{padding:4px 8px;border:1px solid #e8eaf0;border-radius:6px;background:#fff;color:#aaa;font-size:.75em;cursor:pointer;margin-left:4px;transition:all .2s}
+        .clear-single:hover{border-color:var(--vivid-red);color:var(--vivid-red)}
     </style>
 </head>
 <body>
@@ -170,10 +176,11 @@
                 <h3>🏪 All Customer Sales</h3>
                 <div class="toolbar">
                     <input type="text" id="custSearch" placeholder="🔍 Search by name, code, salesman, sector, class..." oninput="clearTimeout(this._t);this._t=setTimeout(()=>{custPage=1;renderCustTable();},300)">
-                    <div class="toolbar-group"><label>Salesman:</label><select id="filtSalesman"><option value="">All</option></select></div>
-                    <div class="toolbar-group"><label>Sector:</label><select id="filtSector"><option value="">All</option></select></div>
-                    <div class="toolbar-group"><label>Class:</label><select id="filtClass"><option value="">All</option></select></div>
-                    <div class="toolbar-group"><label>Date:</label><select id="filtDate"><option value="">All Dates</option></select></div>
+                    <div class="toolbar-group"><label>Salesman:</label><select id="filtSalesman"><option value="">All</option></select><button class="clear-single" onclick="document.getElementById('filtSalesman').value='';custPage=1;renderCustTable();">✕</button></div>
+                    <div class="toolbar-group"><label>Sector:</label><select id="filtSector"><option value="">All</option></select><button class="clear-single" onclick="document.getElementById('filtSector').value='';custPage=1;renderCustTable();">✕</button></div>
+                    <div class="toolbar-group"><label>Class:</label><select id="filtClass"><option value="">All</option></select><button class="clear-single" onclick="document.getElementById('filtClass').value='';custPage=1;renderCustTable();">✕</button></div>
+                    <div class="toolbar-group"><label>Date:</label><select id="filtDate"><option value="">All Dates</option></select><button class="clear-single" onclick="document.getElementById('filtDate').value='';loadCustomersByDate();">✕</button></div>
+                    <button class="clear-btn clear-all" onclick="clearAllSUPFilters()">🗑 Clear All</button>
                 </div>
                 <table class="data-table" id="custTable">
                     <thead><tr><th style="width:30px"></th><th class="sortable" data-sort="code">Code</th><th class="sortable" data-sort="customer">Customer</th><th class="sortable" data-sort="salesman">Salesman</th><th class="sortable" data-sort="routeCode">Route</th><th class="sortable" data-sort="sector">Sector</th><th class="sortable" data-sort="cls">Class</th><th class="sortable" data-sort="totalCY">ACT-CY</th><th class="sortable" data-sort="totalLY">ACT-LY</th><th class="sortable" data-sort="varPct">%YoY Growth</th></tr></thead>
@@ -189,10 +196,12 @@
                 <h3>📋 Supervisor Surveys</h3>
                 <div class="toolbar">
                     <input type="text" id="surveySearch" placeholder="🔍 Search surveys...">
-                    <div class="toolbar-group"><label>Salesman:</label><select id="survFiltSM"><option value="">All</option></select></div>
-                    <div class="toolbar-group"><label>Customer:</label><select id="survFiltCust"><option value="">All</option></select></div>
-                    <div class="toolbar-group"><label>Rating:</label><select id="survFiltRating"><option value="">All</option><option value="low">1-4 (Low)</option><option value="mid">5-7 (Medium)</option><option value="high">8-10 (High)</option></select></div>
-                    <div class="toolbar-group"><label>Sort:</label><select id="survSortBy"><option value="">Latest First</option><option value="rating-desc">Rating ↓</option><option value="rating-asc">Rating ↑</option><option value="salesman-asc">Salesman ↑</option><option value="customer-asc">Customer ↑</option></select></div>
+                    <div class="toolbar-group"><label>Supervisor:</label><select id="survFiltSM"><option value="">All</option></select><button class="clear-single" onclick="document.getElementById('survFiltSM').value='';renderSurveyTable();">✕</button></div>
+                    <div class="toolbar-group"><label>Customer:</label><select id="survFiltCust"><option value="">All</option></select><button class="clear-single" onclick="document.getElementById('survFiltCust').value='';renderSurveyTable();">✕</button></div>
+                    <div class="toolbar-group"><label>Date:</label><select id="survFiltDate"><option value="">All Dates</option></select><button class="clear-single" onclick="document.getElementById('survFiltDate').value='';renderSurveyTable();">✕</button></div>
+                    <div class="toolbar-group"><label>Rating:</label><select id="survFiltRating"><option value="">All</option><option value="low">1-4 (Low)</option><option value="mid">5-7 (Medium)</option><option value="high">8-10 (High)</option></select><button class="clear-single" onclick="document.getElementById('survFiltRating').value='';renderSurveyTable();">✕</button></div>
+                    <div class="toolbar-group"><label>Sort:</label><select id="survSortBy"><option value="">Latest First</option><option value="rating-desc">Rating ↓</option><option value="rating-asc">Rating ↑</option><option value="salesman-asc">Supervisor ↑</option><option value="customer-asc">Customer ↑</option></select></div>
+                    <button class="clear-btn clear-all" onclick="clearAllSurveyFilters()">🗑 Clear All</button>
                 </div>
                 <div id="surveyTableContainer"><p class="survey-loading">Loading surveys...</p></div>
             </div>
@@ -208,7 +217,7 @@ const AZURE_API_URL = 'https://salesap-g4ceg7arc2bkbvfx.centralus-01.azurewebsit
 const POWER_AUTOMATE_GET_URL = 'https://default04af0493a5b44947ab72ae37fae884.14.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/a52eaf1a49894199856439aa7e837f82/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=TKq2xFQ8rgo4juZL9h8SoNrPOH-gEe24DIOd7Jsu0Qw';
 
 let usersData=[],salesmenData=[],masterData=[],currentUser=null,mySalesmen=[],myMasterData=[],serverCustomerSummary=null;
-let allSurveys=[];
+let allSurveys=[],allDatesLoaded=false;
 
 function sanitize(s){const d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
 function toNum(v){const n=Number(v);return isNaN(n)?0:n;}
@@ -495,14 +504,17 @@ function populateSurveyFilters(){
     const supOpts=[...new Set(allSurveys.map(s=>s.supervisorCode))].map(c=>{const sv=allSurveys.find(s=>s.supervisorCode==c);return[String(c),sv?sv.supervisorName+' ('+c+')':String(c)];});
     fill('survFiltSM',supOpts,'Supervisors');
     fill('survFiltCust',[...new Set(allSurveys.map(s=>s.customerName))].sort().map(v=>[v,v]),'Customers');
+    fill('survFiltDate',[...new Set(allSurveys.map(s=>s.date).filter(d=>d))].sort().reverse().map(v=>[v,v]),'Dates');
 }
 
 function getSurveyFiltered(){
     const q=document.getElementById('surveySearch').value.toLowerCase();
     const fSM=document.getElementById('survFiltSM').value,fC=document.getElementById('survFiltCust').value,fR=document.getElementById('survFiltRating').value;
+    const fDate=document.getElementById('survFiltDate').value;
     let d=[...allSurveys];
     if(fSM)d=d.filter(s=>String(s.supervisorCode)===fSM);
     if(fC)d=d.filter(s=>s.customerName===fC);
+    if(fDate)d=d.filter(s=>s.date===fDate);
     if(fR==='low')d=d.filter(s=>s.rating>=1&&s.rating<=4);
     else if(fR==='mid')d=d.filter(s=>s.rating>=5&&s.rating<=7);
     else if(fR==='high')d=d.filter(s=>s.rating>=8&&s.rating<=10);
@@ -562,11 +574,35 @@ function showDashboard(user){
 
     renderSalesmenTable();
     populateCustFilters();
+    // Populate date filter from login data
+    if(window._apiDates&&window._apiDates.length){
+        const sel=document.getElementById('filtDate');
+        if(sel){sel.innerHTML='<option value="">All Dates</option>';
+        window._apiDates.forEach(d=>{sel.innerHTML+='<option value="'+d+'">'+d+'</option>';});}
+        allDatesLoaded=true;
+    }
     renderCustTable();
     loadAllSurveys();
 }
 
 /* ══ EVENTS ══ */
+function clearAllSUPFilters(){
+    document.getElementById('custSearch').value='';
+    document.getElementById('filtSalesman').value='';
+    document.getElementById('filtSector').value='';
+    document.getElementById('filtClass').value='';
+    document.getElementById('filtDate').value='';
+    custPage=1;loadCustomersByDate();
+}
+function clearAllSurveyFilters(){
+    document.getElementById('surveySearch').value='';
+    document.getElementById('survFiltSM').value='';
+    document.getElementById('survFiltCust').value='';
+    document.getElementById('survFiltDate').value='';
+    document.getElementById('survFiltRating').value='';
+    document.getElementById('survSortBy').value='';
+    renderSurveyTable();
+}
 document.addEventListener('DOMContentLoaded',()=>{
     ['smFiltSalesman','smFiltRoute'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('change',renderSalesmenTable);});
     ['filtSalesman','filtSector','filtClass'].forEach(id=>{
@@ -574,7 +610,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     });
     const filtDateEl=document.getElementById('filtDate');
     if(filtDateEl)filtDateEl.addEventListener('change',()=>{loadCustomersByDate();});
-    ['surveySearch','survFiltSM','survFiltCust','survFiltRating','survSortBy'].forEach(id=>{
+    ['surveySearch','survFiltSM','survFiltCust','survFiltDate','survFiltRating','survSortBy'].forEach(id=>{
         const el=document.getElementById(id);el.addEventListener(el.tagName==='INPUT'?'input':'change',renderSurveyTable);
     });
     // Column sort click handlers
