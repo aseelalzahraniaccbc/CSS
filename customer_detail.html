@@ -132,6 +132,12 @@
         th.sortable.sort-asc::after{content:'▲';opacity:0.8;color:var(--electric-blue);}
         th.sortable.sort-desc::after{content:'▼';opacity:0.8;color:var(--electric-blue);}
         th.sortable:hover{background:rgba(0,0,0,0.04);}
+            .clear-btn{padding:8px 16px;border:2px solid #e8eaf0;border-radius:10px;background:#fff;color:#8896a6;font-size:.82em;font-weight:700;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;white-space:nowrap}
+        .clear-btn:hover{border-color:var(--vivid-red);color:var(--vivid-red);background:rgba(255,0,61,.04)}
+        .clear-btn.clear-all{background:rgba(255,0,61,.04);color:var(--vivid-red);border-color:rgba(255,0,61,.2)}
+        .clear-btn.clear-all:hover{background:rgba(255,0,61,.1);border-color:var(--vivid-red)}
+        .clear-single{padding:4px 8px;border:1px solid #e8eaf0;border-radius:6px;background:#fff;color:#aaa;font-size:.75em;cursor:pointer;margin-left:4px;transition:all .2s}
+        .clear-single:hover{border-color:var(--vivid-red);color:var(--vivid-red)}
     </style>
 </head>
 <body>
@@ -174,14 +180,16 @@
         <h3>📦 Product Sales Detail</h3>
         <div class="toolbar">
             <input type="text" id="detailSearch" placeholder="🔍 Search products...">
-            <div class="toolbar-group"><label>Brand:</label><select id="filtBrand"><option value="">All</option></select></div>
-            <div class="toolbar-group"><label>Date:</label><select id="filtDate"><option value="">All</option></select></div>
+            <div class="toolbar-group"><label>Brand:</label><select id="filtBrand"><option value="">All</option></select><button class="clear-single" onclick="document.getElementById('filtBrand').value='';detPage=1;renderDetailTable();">✕</button></div>
+            <div class="toolbar-group"><label>Date:</label><select id="filtDate"><option value="">All</option></select><button class="clear-single" onclick="document.getElementById('filtDate').value='';detPage=1;renderDetailTable();">✕</button></div>
+            <button class="clear-btn clear-all" onclick="clearAllDetailFilters()">🗑 Clear All</button>
         </div>
         <table class="data-table">
-            <thead><tr><th class="sortable" data-sort="sector">Sector</th><th class="sortable" data-sort="cls">Class</th><th class="sortable" data-sort="brand">Brand</th><th class="sortable" data-sort="productGroup">Product Group</th><th class="sortable" data-sort="subBrand">Sub Brand</th><th class="sortable" data-sort="product">Product</th><th class="sortable" data-sort="date">Date</th><th class="sortable" data-sort="achCYP">ACH CY</th><th class="sortable" data-sort="achLYP">ACH LY</th><th class="sortable" data-sort="actCY">ACT-CY</th><th class="sortable" data-sort="actLY">ACT-LY</th><th class="sortable" data-sort="varPct">%YoY Growth</th></tr></thead>
+            <thead><tr><th class="sortable" data-sort="sector">Sector</th><th class="sortable" data-sort="cls">Class</th><th class="sortable" data-sort="brand">Brand</th><th class="sortable" data-sort="productGroup">Product Group</th><th class="sortable" data-sort="subBrand">Sub Brand</th><th class="sortable" data-sort="product">Product</th><th class="sortable" data-sort="date">Date</th><th class="sortable" data-sort="achCYP">ACH CY (P)</th><th class="sortable" data-sort="achLYP">ACH LY (P)</th><th class="sortable" data-sort="actCY">ACT-CY</th><th class="sortable" data-sort="actLY">ACT-LY</th><th class="sortable" data-sort="varPct">%YoY Growth</th></tr></thead>
             <tbody id="detailTableBody"><tr><td colspan="14" class="no-data">Loading…</td></tr></tbody>
             <tfoot><tr class="total-row"><td colspan="7">Total</td><td id="detailTotalACHCY">0</td><td id="detailTotalACHLY">0</td><td class="sales-val" id="detailTotalCY">0</td><td id="detailTotalLY">0</td><td></td></tr></tfoot>
         </table>
+        <div id="detPageNav" style="display:flex;align-items:center;justify-content:center;gap:12px;padding:18px;font-size:.88em;color:#8896a6"></div>
     </div>
 
     <!-- Survey History -->
@@ -319,25 +327,39 @@ function getFilteredDetail(){
     return d;
 }
 
+let detPage=1;const detPageSize=50;
+function clearAllDetailFilters(){
+    document.getElementById('detailSearch').value='';
+    document.getElementById('filtBrand').value='';
+    document.getElementById('filtDate').value='';
+    detPage=1;renderDetailTable();
+}
 function renderDetailTable(){
-    const data=getFilteredDetail();
+    const allData=getFilteredDetail();
+    const totalPages=Math.ceil(allData.length/detPageSize)||1;
+    if(detPage>totalPages)detPage=totalPages;
+    const start=(detPage-1)*detPageSize;
+    const data=allData.slice(start,start+detPageSize);
     const tbody=document.getElementById('detailTableBody');
-    if(!data.length){tbody.innerHTML='<tr><td colspan="14" class="no-data">No data found</td></tr>';document.getElementById('detailTotalCY').textContent='0';document.getElementById('detailTotalLY').textContent='0';return;}
-    let html='',tCY=0,tLY=0;
+    if(!allData.length){tbody.innerHTML='<tr><td colspan="14" class="no-data">No data found</td></tr>';document.getElementById('detailTotalCY').textContent='0';document.getElementById('detailTotalLY').textContent='0';document.getElementById('detPageNav').innerHTML='';return;}
+    let html='';
     data.forEach(r=>{
         const cy=+r.actCY||0,ly=+r.actLY||0;
-        tCY+=cy;tLY+=ly;
         const v=ly?((cy-ly)/ly*100):0;
         const vcls=v>=0?'var-positive':'var-negative';
         html+='<tr><td>'+sanitize(r.sector||'')+'</td><td>'+sanitize(r.cls||'')+'</td><td style="font-weight:600;color:var(--electric-blue)">'+sanitize(r.brand)+'</td><td>'+sanitize(r.productGroup)+'</td><td>'+sanitize(r.subBrand)+'</td><td>'+sanitize(r.product)+'</td><td>'+sanitize(r.date)+'</td><td>'+(+(r.achCYP)||0).toLocaleString()+'</td><td>'+(+(r.achLYP)||0).toLocaleString()+'</td><td class="sales-val">'+cy.toLocaleString()+'</td><td>'+ly.toLocaleString()+'</td><td><span class="'+vcls+'">'+(v>=0?'+':'')+v.toFixed(1)+'%</span></td></tr>';
     });
     tbody.innerHTML=html;
-    document.getElementById('detailTotalACHCY').textContent=data.reduce((a,r)=>a+(+(r.achCYP)||0),0).toLocaleString();
-    document.getElementById('detailTotalACHLY').textContent=data.reduce((a,r)=>a+(+(r.achLYP)||0),0).toLocaleString();
-    document.getElementById('detailTotalCY').textContent=tCY.toLocaleString();
-    document.getElementById('detailTotalLY').textContent=tLY.toLocaleString();
-    // Sort arrows
+    // Totals from ALL filtered data, not just current page
+    document.getElementById('detailTotalACHCY').textContent=allData.reduce((a,r)=>a+(+(r.achCYP)||0),0).toLocaleString();
+    document.getElementById('detailTotalACHLY').textContent=allData.reduce((a,r)=>a+(+(r.achLYP)||0),0).toLocaleString();
+    document.getElementById('detailTotalCY').textContent=allData.reduce((a,r)=>a+(+(r.actCY)||0),0).toLocaleString();
+    document.getElementById('detailTotalLY').textContent=allData.reduce((a,r)=>a+(+(r.actLY)||0),0).toLocaleString();
     document.querySelectorAll('th.sortable').forEach(th=>{th.classList.remove('sort-asc','sort-desc');if(th.dataset.sort===detSortField)th.classList.add('sort-'+detSortDir);});
+    // Page nav
+    const nav=document.getElementById('detPageNav');
+    if(totalPages<=1){nav.innerHTML='';return;}
+    nav.innerHTML=`<button onclick="detPage=1;renderDetailTable()" style="padding:6px 14px;border:2px solid #e8eaf0;border-radius:8px;background:#fff;cursor:pointer;font-weight:600">«</button><button onclick="detPage=Math.max(1,detPage-1);renderDetailTable()" style="padding:6px 14px;border:2px solid #e8eaf0;border-radius:8px;background:#fff;cursor:pointer;font-weight:600">‹</button><span style="font-weight:700;color:var(--deep-navy)">Page ${detPage} of ${totalPages}</span><span>(${allData.length} products)</span><button onclick="detPage=Math.min(${totalPages},detPage+1);renderDetailTable()" style="padding:6px 14px;border:2px solid var(--electric-blue);border-radius:8px;background:rgba(20,46,255,.05);cursor:pointer;font-weight:600;color:var(--electric-blue)">›</button><button onclick="detPage=${totalPages};renderDetailTable()" style="padding:6px 14px;border:2px solid #e8eaf0;border-radius:8px;background:#fff;cursor:pointer;font-weight:600">»</button>`;
 }
 
 // ══ SURVEY ══
@@ -383,7 +405,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     });
     ['detailSearch','filtBrand','filtDate'].forEach(id=>{
         const el=document.getElementById(id);
-        if(el)el.addEventListener(el.tagName==='INPUT'?'input':'change',renderDetailTable);
+        if(el)el.addEventListener(el.tagName==='INPUT'?'input':'change',()=>{detPage=1;renderDetailTable();});
     });
     document.querySelectorAll('th.sortable').forEach(th=>{th.addEventListener('click',function(){const f=this.dataset.sort;if(detSortField===f)detSortDir=detSortDir==='asc'?'desc':'asc';else{detSortField=f;detSortDir='asc';}renderDetailTable();});});
 });
