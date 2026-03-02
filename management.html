@@ -252,13 +252,24 @@ function removeConfig(i){
 function renderCat(){
     const list=document.getElementById('catList');
     if(!allProd.length){list.innerHTML='<p style="font-size:.8em;color:var(--muted)">No products loaded yet.</p>';return;}
-    list.innerHTML=allProd.map(p=>{
-        const id=p['PK_ProductID']||'';
+    list.innerHTML='';
+    allProd.forEach(p=>{
+        const id=String(p['PK_ProductID']||'');
         const brand=p['Brand']||'';
         const prod=p['Product']||p['SubBrand']||'';
         const display=brand+(prod?' – '+prod:'');
-        return `<div class="cat-item" draggable="true" ondragstart="event.dataTransfer.setData('pid','${sanitize(id)}');event.dataTransfer.setData('pname','${sanitize(display)}')">${sanitize(display)}</div>`;
-    }).join('');
+        const div=document.createElement('div');
+        div.className='cat-item';
+        div.draggable=true;
+        div.textContent=display;
+        div.dataset.pid=id;
+        div.dataset.pname=display;
+        div.addEventListener('dragstart',function(e){
+            e.dataTransfer.setData('pid',this.dataset.pid);
+            e.dataTransfer.setData('pname',this.dataset.pname);
+        });
+        list.appendChild(div);
+    });
 }
 function filterCat(){
     const q=document.getElementById('catSearch').value.toLowerCase();
