@@ -254,6 +254,11 @@
             <div class="audit-stat a-red"><div class="a-val" id="arMisplaced">0</div><div class="a-lbl">Misplaced</div></div>
             <div class="audit-stat a-yellow"><div class="a-val" id="arStockout">0</div><div class="a-lbl">Stockout</div></div>
         </div>
+        <div id="arShareRow" style="display:none;text-align:center;margin-bottom:16px;padding:12px;border-radius:12px;border:2px solid #e8eaf0">
+            <span style="font-size:.85em;color:#8896a6;font-weight:600">Share of Shelf: </span>
+            <span class="compliance-pct" id="arSharePct" style="font-size:1.4em">—</span>
+            <span id="arShareTarget" style="font-size:.82em;color:#8896a6;margin-left:8px"></span>
+        </div>
         <div class="audit-det-list" id="auditDetList"></div>
     </div>
 
@@ -722,7 +727,7 @@ async function runShelfAnalysis(){
         });
         if(!r.ok)throw new Error('Server error: '+r.status);
         const data=await r.json();
-        if(data.error)throw new Error(data.error);
+        if(data.error)throw new Error(data.error + (data.detail ? ' — ' + data.detail : ''));
         if(!data.analysis)throw new Error('No analysis returned');
         showAuditResults(data.analysis);
     }catch(err){
@@ -759,6 +764,14 @@ function showAuditResults(analysis){
     document.getElementById('arCompliant').textContent=s.totalCompliant||0;
     document.getElementById('arMisplaced').textContent=s.totalMisplaced||0;
     document.getElementById('arStockout').textContent=s.totalStockout||0;
+    // Share of shelf
+    if(s.shareOfShelf!==undefined&&s.shareOfShelf>0){
+        document.getElementById('arShareRow').style.display='block';
+        const sEl=document.getElementById('arSharePct');
+        sEl.textContent=s.shareOfShelf.toFixed(1)+'%';
+        sEl.className='compliance-pct '+(s.targetSharePct&&s.shareOfShelf>=s.targetSharePct?'pct-green':'pct-yellow');
+        document.getElementById('arShareTarget').textContent=s.targetSharePct?('Target: '+s.targetSharePct+'%'):'';
+    }
     renderDetList('auditDetList',analysis);
 
     // Update badge
