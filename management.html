@@ -77,6 +77,25 @@
         .msg-err{background:rgba(255,0,61,.06);border:1px solid rgba(255,0,61,.15);color:var(--vivid-red)}
         .powerbi-box{border-radius:16px;overflow:hidden;border:2px solid var(--border)}
         .powerbi-box iframe{width:100%;height:600px;border:none}
+
+        /* Product Library */
+        .prod-card{background:var(--bg);border-radius:14px;border:2px solid var(--border);overflow:hidden;transition:all .3s}
+        .prod-card:hover{border-color:rgba(20,46,255,.15);box-shadow:0 6px 20px rgba(20,46,255,.06)}
+        .prod-card-header{padding:14px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+        .prod-card-header h4{font-family:'Outfit';font-weight:700;font-size:.88em;color:var(--deep-navy);flex:1}
+        .prod-card-header .pid{font-size:.72em;color:var(--muted);font-weight:600;background:rgba(20,46,255,.06);padding:2px 8px;border-radius:6px}
+        .prod-card-body{padding:14px 16px}
+        .prod-images{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+        .prod-img-slot{aspect-ratio:1;border-radius:10px;border:2px dashed var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;overflow:hidden;position:relative;background:var(--card)}
+        .prod-img-slot:hover{border-color:var(--electric-blue);background:rgba(20,46,255,.02)}
+        .prod-img-slot.has-img{border-style:solid;border-color:#e8eaf0;cursor:default}
+        .prod-img-slot img{width:100%;height:100%;object-fit:cover}
+        .prod-img-slot .slot-label{font-size:.68em;color:var(--muted);font-weight:700;text-transform:uppercase}
+        .prod-img-slot .slot-icon{font-size:1.2em;margin-bottom:2px}
+        .prod-img-slot .img-remove{position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:rgba(255,0,61,.85);color:#fff;border:none;font-size:.6em;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s}
+        .prod-img-slot:hover .img-remove{opacity:1}
+        .prod-brand-badge{display:inline-block;padding:3px 10px;border-radius:6px;font-size:.72em;font-weight:700;background:rgba(20,46,255,.06);color:var(--electric-blue)}
+        .golden-thumb{max-width:100%;max-height:150px;border-radius:10px;border:2px solid var(--border)}
         .toast{position:fixed;bottom:30px;right:30px;padding:16px 28px;border-radius:14px;font-weight:700;font-size:.9em;font-family:'Outfit';z-index:999;transform:translateY(100px);opacity:0;transition:all .4s}
         .toast.show{transform:translateY(0);opacity:1}
         .toast-success{background:var(--success);color:#fff;box-shadow:0 10px 30px rgba(16,185,129,.3)}
@@ -99,6 +118,7 @@
     <button class="tab-btn active" onclick="switchTab('dashboard')">📊 Dashboard</button>
     <button class="tab-btn" onclick="switchTab('shelfconfig')">🔧 Shelf Config</button>
     <button class="tab-btn" onclick="switchTab('planogram')">📋 Planogram</button>
+    <button class="tab-btn" onclick="switchTab('productlib')">📸 Product Library</button>
     <button class="tab-btn" onclick="switchTab('upload')">📤 Data Upload</button>
 </div>
 
@@ -119,13 +139,26 @@
         <div class="field grow"><label>Customer</label><select class="form-select" id="cfgCust" style="width:100%"><option value="">Select customer...</option></select></div>
         <div class="field"><label>Shelves</label><input type="number" class="form-input" id="cfgCount" value="3" min="1" max="10" style="width:80px"></div>
         <div class="field"><label>Shelf Type</label><select class="form-select" id="cfgType" style="width:160px"><option value="standard">Standard Wall</option><option value="cooler">Cooler / Fridge</option><option value="gondola">Gondola</option><option value="endcap">End Cap</option><option value="floor">Floor Rack</option></select></div>
-        <div class="field"><label>Notes</label><input type="text" class="form-input" id="cfgNotes" placeholder="Optional..." style="width:160px"></div>
+        <div class="field"><label>Target Share %</label><input type="number" class="form-input" id="cfgTargetShare" value="0" min="0" max="100" step="0.5" style="width:90px" placeholder="e.g. 12"></div>
+        <div class="field"><label>Notes</label><input type="text" class="form-input" id="cfgNotes" placeholder="Optional..." style="width:140px"></div>
         <div class="field"><label>&nbsp;</label><button class="btn btn-primary" onclick="addConfig()">+ Add</button></div>
     </div>
 
+    <!-- Golden Image Upload -->
+    <div id="goldenImageSection" style="display:none;margin-bottom:20px;padding:20px;background:var(--bg);border-radius:14px;border:2px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+            <span style="font-family:'Outfit';font-weight:700;font-size:.92em;color:var(--deep-navy)">📸 Golden Image for: <span id="goldenCustName" style="color:var(--electric-blue)"></span></span>
+            <button class="btn btn-primary btn-sm" onclick="document.getElementById('goldenInput').click()" style="margin-left:auto;font-size:.8em;padding:8px 16px">📷 Upload Golden Image</button>
+            <button class="btn btn-danger btn-sm" onclick="removeGoldenImage()" id="goldenRemoveBtn" style="display:none;font-size:.8em;padding:8px 16px">✕ Remove</button>
+            <input type="file" id="goldenInput" accept="image/*" style="display:none">
+        </div>
+        <p style="font-size:.82em;color:var(--muted);margin-bottom:12px">Upload a photo of the perfectly organized shelf. The AI will use this as a visual reference to compare against audit photos.</p>
+        <div id="goldenPreview" style="text-align:center"></div>
+    </div>
+
     <table class="data-table">
-        <thead><tr><th>Customer</th><th>Code</th><th style="text-align:center">Shelves</th><th>Type</th><th>Notes</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody id="cfgBody"><tr><td colspan="7" class="no-data">No shelf configurations yet. Add one above.</td></tr></tbody>
+        <thead><tr><th>Customer</th><th>Code</th><th style="text-align:center">Shelves</th><th>Type</th><th style="text-align:center">Target %</th><th>Golden</th><th>Notes</th><th>Actions</th></tr></thead>
+        <tbody id="cfgBody"><tr><td colspan="8" class="no-data">No shelf configurations yet. Add one above.</td></tr></tbody>
     </table>
 </div>
 
@@ -151,7 +184,22 @@
     </div>
 </div>
 
-<!-- TAB 4: UPLOAD -->
+<!-- TAB 4: PRODUCT LIBRARY -->
+<div class="tab-panel" id="tab-productlib">
+    <h3 class="section-title">📸 Product Reference Library</h3>
+    <p style="color:var(--muted);margin-bottom:20px;font-size:.88em">Upload reference images for each product. The AI uses these as "Golden References" to identify products on shelves. Upload Front, Side, and Top views for best accuracy.</p>
+
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:20px;padding:16px 20px;background:var(--bg);border-radius:14px;border:2px solid var(--border)">
+        <label style="font-size:.82em;color:var(--muted);font-weight:700">Filter by Brand:</label>
+        <select class="form-select" id="libBrandFilter" onchange="renderProductLib()" style="min-width:200px"><option value="">All Brands</option></select>
+        <input type="text" class="form-input" id="libSearch" placeholder="🔍 Search products..." oninput="renderProductLib()" style="flex:1;min-width:200px">
+        <span id="libCount" style="font-size:.82em;color:var(--muted);font-weight:600"></span>
+    </div>
+
+    <div id="productLibGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px"></div>
+</div>
+
+<!-- TAB 5: UPLOAD -->
 <div class="tab-panel" id="tab-upload">
     <h3 class="section-title">📤 Update Customer Data</h3>
     <p style="color:var(--muted);margin-bottom:20px;font-size:.88em">Upload an Excel file to update customer master data.</p>
@@ -169,12 +217,12 @@
 
 <script>
 const API='https://salesap-g4ceg7arc2bkbvfx.centralus-01.azurewebsites.net/api/api';
-let allCust=[],allProd=[],configs=[];
+let allCust=[],allProd=[],configs=[],prodImages={};
 let planogram={}; // {shelfNum:[{id,name}]}
 
 function sanitize(s){const d=document.createElement('div');d.textContent=String(s||'');return d.innerHTML;}
 function switchTab(t){
-    ['dashboard','shelfconfig','planogram','upload'].forEach((id,i)=>{
+    ['dashboard','shelfconfig','planogram','productlib','upload'].forEach((id,i)=>{
         document.querySelectorAll('.tab-btn')[i].classList.toggle('active',id===t);
         document.getElementById('tab-'+id).classList.toggle('active',id===t);
     });
@@ -186,7 +234,28 @@ async function init(){
     try{const r=await fetch(API+'?action=allCustomers');if(r.ok){const d=await r.json();if(d.customers)allCust=d.customers;}}catch(e){}
     try{const r=await fetch(API+'?action=allProducts');if(r.ok){const d=await r.json();if(d.products)allProd=d.products;}}catch(e){}
     try{const r=await fetch(API+'?action=getShelfConfigs');if(r.ok){const d=await r.json();if(d.configs)configs=d.configs;}}catch(e){}
-    fillDropdowns();renderConfigs();renderCat();
+    try{const r=await fetch(API+'?action=getProductImages');if(r.ok){const d=await r.json();if(d.images){d.images.forEach(img=>{const k=img.PK_ProductID+'_'+img.ImageAngle;prodImages[k]=img;});}}}catch(e){}
+    fillDropdowns();renderConfigs();renderCat();renderProductLib();
+    // Golden image handler
+    document.getElementById('goldenInput').addEventListener('change',handleGoldenUpload);
+    // Show golden section when customer selected
+    document.getElementById('cfgCust').addEventListener('change',function(){
+        const code=this.value;
+        const sec=document.getElementById('goldenImageSection');
+        if(code){
+            sec.style.display='block';
+            const cust=allCust.find(c=>c['Customer Code']===code);
+            document.getElementById('goldenCustName').textContent=cust?cust['Customer']:code;
+            const cfg=configs.find(c=>(c.customerCode||c['Customer Code'])===code);
+            if(cfg&&(cfg.GoldenImageBase64||cfg.goldenImage)){
+                document.getElementById('goldenPreview').innerHTML='<img src="'+(cfg.GoldenImageBase64||cfg.goldenImage)+'" class="golden-thumb" alt="Golden Image">';
+                document.getElementById('goldenRemoveBtn').style.display='inline-block';
+            }else{
+                document.getElementById('goldenPreview').innerHTML='<p style="color:var(--muted);font-size:.85em;font-style:italic">No golden image uploaded yet</p>';
+                document.getElementById('goldenRemoveBtn').style.display='none';
+            }
+        }else{sec.style.display='none';}
+    });
 }
 
 function fillDropdowns(){
@@ -198,20 +267,23 @@ function fillDropdowns(){
 // ═══ SHELF CONFIG ═══
 function renderConfigs(){
     const tb=document.getElementById('cfgBody');
-    if(!configs.length){tb.innerHTML='<tr><td colspan="7" class="no-data">No shelf configurations yet. Add one above.</td></tr>';return;}
+    if(!configs.length){tb.innerHTML='<tr><td colspan="8" class="no-data">No shelf configurations yet. Add one above.</td></tr>';return;}
     tb.innerHTML=configs.map((c,i)=>{
         const code=c.customerCode||c['Customer Code']||'';
         const name=c.customerName||c['Customer']||code;
         const cnt=c.shelfCount||c.ShelfCount||0;
         const type=c.shelfType||c.ShelfType||'standard';
         const notes=c.notes||c.Notes||'—';
+        const share=c.targetSharePct||c.TargetSharePct||0;
+        const hasGolden=!!(c.GoldenImageBase64||c.goldenImage);
         return `<tr>
             <td style="font-weight:600;color:var(--deep-navy)">${sanitize(name)}</td>
             <td>${sanitize(code)}</td>
             <td style="text-align:center"><span class="shelf-count-badge">${cnt}</span></td>
             <td><span class="shelf-type-badge">${sanitize(type)}</span></td>
+            <td style="text-align:center;font-weight:700;color:${share>0?'var(--electric-blue)':'var(--muted)'}">${share>0?share+'%':'—'}</td>
+            <td>${hasGolden?'<span style="color:var(--success);font-weight:700">✅ Yes</span>':'<span style="color:var(--muted)">—</span>'}</td>
             <td style="font-size:.82em;color:var(--muted)">${sanitize(notes)}</td>
-            <td><span class="config-status status-ok">✓ Configured</span></td>
             <td><button class="btn btn-danger btn-sm" onclick="removeConfig(${i})">Remove</button></td>
         </tr>`;
     }).join('');
@@ -223,21 +295,33 @@ function addConfig(){
     const count=parseInt(document.getElementById('cfgCount').value)||3;
     const type=document.getElementById('cfgType').value;
     const notes=document.getElementById('cfgNotes').value;
+    const targetShare=parseFloat(document.getElementById('cfgTargetShare').value)||0;
     const cust=allCust.find(c=>c['Customer Code']===code);
     const name=cust?cust['Customer']:'';
 
     const idx=configs.findIndex(c=>(c.customerCode||c['Customer Code'])===code);
-    const obj={customerCode:code,customerName:name,shelfCount:count,shelfType:type,notes:notes};
+    let goldenImage=null;
+    if(idx>=0){goldenImage=configs[idx].GoldenImageBase64||configs[idx].goldenImage||null;}
+    const preview=document.getElementById('goldenPreview').querySelector('img');
+    if(preview&&preview.src&&preview.src.startsWith('data:')){goldenImage=preview.src;}
+
+    const obj={customerCode:code,customerName:name,shelfCount:count,shelfType:type,notes:notes,targetSharePct:targetShare,goldenImage:goldenImage};
     if(idx>=0){configs[idx]=obj;toast('Updated: '+name);}
     else{configs.push(obj);toast('Added: '+name);}
 
-    // Save to server
-    fetch(API+'?action=saveShelfConfig',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj)}).catch(e=>console.error(e));
+    const saveObj={customerCode:code,shelfCount:count,shelfType:type,notes:notes,targetSharePct:targetShare};
+    fetch(API+'?action=saveShelfConfig',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(saveObj)}).catch(e=>console.error(e));
+    if(goldenImage){
+        fetch(API+'?action=saveGoldenImage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({customerCode:code,imageBase64:goldenImage})}).catch(e=>console.error(e));
+    }
 
     renderConfigs();
     document.getElementById('cfgCust').value='';
     document.getElementById('cfgCount').value='3';
     document.getElementById('cfgNotes').value='';
+    document.getElementById('cfgTargetShare').value='0';
+    document.getElementById('goldenImageSection').style.display='none';
+    document.getElementById('goldenPreview').innerHTML='';
 }
 
 function removeConfig(i){
@@ -359,6 +443,116 @@ function processFile(file){
 }
 
 window.onload=init;
+
+// ═══ GOLDEN IMAGE ═══
+function handleGoldenUpload(e){
+    const file=e.target.files[0];
+    if(!file)return;
+    const reader=new FileReader();
+    reader.onload=function(ev){
+        document.getElementById('goldenPreview').innerHTML='<img src="'+ev.target.result+'" class="golden-thumb" alt="Golden Image">';
+        document.getElementById('goldenRemoveBtn').style.display='inline-block';
+        toast('Golden image loaded — click "+ Add" to save');
+    };
+    reader.readAsDataURL(file);
+}
+function removeGoldenImage(){
+    const code=document.getElementById('cfgCust').value;
+    document.getElementById('goldenPreview').innerHTML='<p style="color:var(--muted);font-size:.85em;font-style:italic">No golden image uploaded yet</p>';
+    document.getElementById('goldenRemoveBtn').style.display='none';
+    if(code){
+        const idx=configs.findIndex(c=>(c.customerCode||c['Customer Code'])===code);
+        if(idx>=0){configs[idx].goldenImage=null;configs[idx].GoldenImageBase64=null;}
+        fetch(API+'?action=saveGoldenImage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({customerCode:code,imageBase64:null})}).catch(e=>console.error(e));
+    }
+    toast('Golden image removed');
+}
+
+// ═══ PRODUCT LIBRARY ═══
+function renderProductLib(){
+    const grid=document.getElementById('productLibGrid');
+    const brandFilter=document.getElementById('libBrandFilter').value;
+    const search=document.getElementById('libSearch').value.toLowerCase();
+
+    // Populate brand filter if empty
+    const brandSel=document.getElementById('libBrandFilter');
+    if(brandSel.options.length<=1){
+        const brands=[...new Set(allProd.map(p=>p.Brand).filter(Boolean))].sort();
+        brands.forEach(b=>{const o=document.createElement('option');o.value=b;o.textContent=b;brandSel.appendChild(o);});
+    }
+
+    let filtered=allProd;
+    if(brandFilter)filtered=filtered.filter(p=>p.Brand===brandFilter);
+    if(search)filtered=filtered.filter(p=>(p.Brand+' '+p.Product+' '+(p.SubBrand||'')+' '+p.PK_ProductID).toLowerCase().includes(search));
+
+    document.getElementById('libCount').textContent=filtered.length+' of '+allProd.length+' products';
+
+    if(!filtered.length){grid.innerHTML='<p style="color:var(--muted);font-style:italic;padding:40px;text-align:center">No products found</p>';return;}
+
+    grid.innerHTML=filtered.map(p=>{
+        const pid=p.PK_ProductID||'';
+        const brand=p.Brand||'';
+        const prod=p.Product||p.SubBrand||'';
+        const angles=['front','side','top'];
+        const imgSlots=angles.map(angle=>{
+            const key=pid+'_'+angle;
+            const img=prodImages[key];
+            if(img){
+                return `<div class="prod-img-slot has-img">
+                    <img src="${img.ImageBase64}" alt="${angle}">
+                    <button class="img-remove" onclick="removeProductImage('${pid}','${angle}')">✕</button>
+                </div>`;
+            }else{
+                return `<div class="prod-img-slot" onclick="uploadProductImage('${pid}','${angle}')">
+                    <span class="slot-icon">📷</span>
+                    <span class="slot-label">${angle}</span>
+                </div>`;
+            }
+        }).join('');
+
+        return `<div class="prod-card">
+            <div class="prod-card-header">
+                <h4>${sanitize(prod)}</h4>
+                <span class="pid">${sanitize(pid)}</span>
+            </div>
+            <div class="prod-card-body">
+                <span class="prod-brand-badge">${sanitize(brand)}</span>
+                <div class="prod-images" style="margin-top:10px">${imgSlots}</div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+let _uploadPid='',_uploadAngle='';
+function uploadProductImage(pid,angle){
+    _uploadPid=pid;_uploadAngle=angle;
+    const inp=document.createElement('input');
+    inp.type='file';inp.accept='image/*';
+    inp.onchange=function(e){
+        const file=e.target.files[0];
+        if(!file)return;
+        const reader=new FileReader();
+        reader.onload=function(ev){
+            const base64=ev.target.result;
+            const key=_uploadPid+'_'+_uploadAngle;
+            prodImages[key]={PK_ProductID:_uploadPid,ImageAngle:_uploadAngle,ImageBase64:base64};
+            renderProductLib();
+            toast('Photo uploaded: '+_uploadAngle+' view');
+            // Save to server
+            fetch(API+'?action=saveProductImage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({productId:_uploadPid,angle:_uploadAngle,imageBase64:base64})}).catch(e=>console.error(e));
+        };
+        reader.readAsDataURL(file);
+    };
+    inp.click();
+}
+
+function removeProductImage(pid,angle){
+    const key=pid+'_'+angle;
+    delete prodImages[key];
+    renderProductLib();
+    toast('Photo removed');
+    fetch(API+'?action=deleteProductImage&pid='+encodeURIComponent(pid)+'&angle='+encodeURIComponent(angle)).catch(e=>console.error(e));
+}
 </script>
 </body>
 </html>
