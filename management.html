@@ -100,6 +100,18 @@
         .toast.show{transform:translateY(0);opacity:1}
         .toast-success{background:var(--success);color:#fff;box-shadow:0 10px 30px rgba(16,185,129,.3)}
         .toast-error{background:var(--vivid-red);color:#fff;box-shadow:0 10px 30px rgba(255,0,61,.3)}
+        /* Searchable customer input */
+        .search-wrap{position:relative;flex:1;min-width:250px}
+        .search-wrap input{width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-family:'DM Sans';font-size:.88em;color:var(--deep-navy);background:var(--card)}
+        .search-wrap input:focus{outline:none;border-color:var(--electric-blue)}
+        .search-dd{position:absolute;top:100%;left:0;right:0;background:var(--card);border:2px solid var(--electric-blue);border-top:none;border-radius:0 0 10px 10px;max-height:240px;overflow-y:auto;z-index:50;display:none;box-shadow:0 10px 30px rgba(0,0,0,.1)}
+        .search-dd.open{display:block}
+        .search-dd-item{padding:10px 14px;font-size:.85em;cursor:pointer;border-bottom:1px solid #f0f2f8;color:var(--deep-navy)}
+        .search-dd-item:hover{background:rgba(20,46,255,.04)}
+        .search-dd-item .dd-code{font-size:.75em;color:var(--muted);margin-left:6px}
+        .search-selected{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:8px;background:rgba(20,46,255,.06);color:var(--electric-blue);font-weight:600;font-size:.85em;margin-top:6px}
+        .search-selected .x-sel{cursor:pointer;opacity:.6;font-size:.8em}
+        .search-selected .x-sel:hover{opacity:1;color:var(--vivid-red)}
         @media(max-width:768px){.header{flex-direction:column;gap:16px;text-align:center}.tab-panel{margin:0 16px 20px;padding:20px}.tab-nav{margin:0 16px}.config-form{flex-direction:column}.plano-container{flex-direction:column}.cat-panel{width:100%;position:static}}
     </style>
 </head>
@@ -136,7 +148,14 @@
     <p style="color:var(--muted);margin-bottom:20px;font-size:.88em">Set the number of shelves for each customer. The AI uses this to map product positions from shelf photos.</p>
 
     <div class="config-form">
-        <div class="field grow"><label>Customer</label><select class="form-select" id="cfgCust" style="width:100%"><option value="">Select customer...</option></select></div>
+        <div class="field grow"><label>Customer</label>
+            <div class="search-wrap">
+                <input type="text" class="form-input" id="cfgCustSearch" placeholder="🔍 Type customer name..." autocomplete="off" oninput="filterCustDD('cfg')" onfocus="filterCustDD('cfg')">
+                <div class="search-dd" id="cfgCustDD"></div>
+                <input type="hidden" id="cfgCust" value="">
+                <div id="cfgCustSelected"></div>
+            </div>
+        </div>
         <div class="field"><label>Shelves</label><input type="number" class="form-input" id="cfgCount" value="3" min="1" max="10" style="width:80px"></div>
         <div class="field"><label>Shelf Type</label><select class="form-select" id="cfgType" style="width:160px"><option value="standard">Standard Wall</option><option value="cooler">Cooler / Fridge</option><option value="gondola">Gondola</option><option value="endcap">End Cap</option><option value="floor">Floor Rack</option></select></div>
         <div class="field"><label>Target Share %</label><input type="number" class="form-input" id="cfgTargetShare" value="0" min="0" max="100" step="0.5" style="width:90px" placeholder="e.g. 12"></div>
@@ -169,7 +188,12 @@
 
     <div class="plano-customer-bar">
         <label>Customer:</label>
-        <select class="form-select" id="planoCust" onchange="loadPlanogram()" style="min-width:280px"><option value="">Select customer...</option></select>
+        <div class="search-wrap" style="min-width:280px">
+            <input type="text" class="form-input" id="planoCustSearch" placeholder="🔍 Type customer name..." autocomplete="off" oninput="filterCustDD('plano')" onfocus="filterCustDD('plano')">
+            <div class="search-dd" id="planoCustDD"></div>
+            <input type="hidden" id="planoCust" value="">
+            <div id="planoCustSelected"></div>
+        </div>
         <span id="planoInfo" style="font-size:.82em;color:var(--muted)"></span>
         <button class="btn btn-primary" onclick="savePlanogram()" style="margin-left:auto">💾 Save Planogram</button>
     </div>
@@ -178,6 +202,7 @@
         <div class="plano-shelves" id="planoShelves"><p class="no-data">Select a customer above to configure their planogram</p></div>
         <div class="cat-panel">
             <h4>📦 Product Catalog</h4>
+            <select class="form-select" id="catBrandFilter" onchange="renderCat()" style="width:100%;margin-bottom:8px;font-size:.8em"><option value="">All Brands</option></select>
             <input type="text" id="catSearch" placeholder="🔍 Search products..." oninput="filterCat()">
             <div id="catList"><p style="font-size:.8em;color:var(--muted)">Loading products...</p></div>
         </div>
@@ -238,31 +263,63 @@ async function init(){
     fillDropdowns();renderConfigs();renderCat();renderProductLib();
     // Golden image handler
     document.getElementById('goldenInput').addEventListener('change',handleGoldenUpload);
-    // Show golden section when customer selected
-    document.getElementById('cfgCust').addEventListener('change',function(){
-        const code=this.value;
-        const sec=document.getElementById('goldenImageSection');
-        if(code){
-            sec.style.display='block';
-            const cust=allCust.find(c=>c['Customer Code']===code);
-            document.getElementById('goldenCustName').textContent=cust?cust['Customer']:code;
-            const cfg=configs.find(c=>(c.customerCode||c['Customer Code'])===code);
-            if(cfg&&(cfg.GoldenImageBase64||cfg.goldenImage)){
-                document.getElementById('goldenPreview').innerHTML='<img src="'+(cfg.GoldenImageBase64||cfg.goldenImage)+'" class="golden-thumb" alt="Golden Image">';
-                document.getElementById('goldenRemoveBtn').style.display='inline-block';
-            }else{
-                document.getElementById('goldenPreview').innerHTML='<p style="color:var(--muted);font-size:.85em;font-style:italic">No golden image uploaded yet</p>';
-                document.getElementById('goldenRemoveBtn').style.display='none';
-            }
-        }else{sec.style.display='none';}
-    });
 }
 
 function fillDropdowns(){
-    const opts=allCust.map(c=>`<option value="${sanitize(c['Customer Code'])}">${sanitize(c['Customer'])} (${sanitize(c['Customer Code'])})</option>`).join('');
-    document.getElementById('cfgCust').innerHTML='<option value="">Select customer...</option>'+opts;
-    document.getElementById('planoCust').innerHTML='<option value="">Select customer...</option>'+opts;
+    // Populate brand filters
+    const brands=[...new Set(allProd.map(p=>p.Brand).filter(Boolean))].sort();
+    const catBrand=document.getElementById('catBrandFilter');
+    if(catBrand.options.length<=1){brands.forEach(b=>{const o=document.createElement('option');o.value=b;o.textContent=b;catBrand.appendChild(o);});}
 }
+
+// ═══ CUSTOMER SEARCH DROPDOWNS ═══
+function filterCustDD(prefix){
+    const input=document.getElementById(prefix+'CustSearch');
+    const dd=document.getElementById(prefix+'CustDD');
+    const q=input.value.toLowerCase().trim();
+    if(!q||q.length<1){dd.classList.remove('open');return;}
+    const matches=allCust.filter(c=>(c['Customer']||'').toLowerCase().includes(q)||(c['Customer Code']||'').toLowerCase().includes(q)).slice(0,15);
+    if(!matches.length){dd.innerHTML='<div class="search-dd-item" style="color:var(--muted)">No customers found</div>';dd.classList.add('open');return;}
+    dd.innerHTML=matches.map(c=>`<div class="search-dd-item" onclick="selectCust('${prefix}','${(c['Customer Code']||'').replace(/'/g,"\\'")}','${(c['Customer']||'').replace(/'/g,"\\'")}')"><strong>${sanitize(c['Customer'])}</strong><span class="dd-code">${sanitize(c['Customer Code'])}</span></div>`).join('');
+    dd.classList.add('open');
+}
+function selectCust(prefix,code,name){
+    document.getElementById(prefix+'Cust').value=code;
+    document.getElementById(prefix+'CustSearch').value='';
+    document.getElementById(prefix+'CustDD').classList.remove('open');
+    document.getElementById(prefix+'CustSelected').innerHTML=`<div class="search-selected">${sanitize(name)} <span class="dd-code">${sanitize(code)}</span> <span class="x-sel" onclick="clearCust('${prefix}')">&times;</span></div>`;
+    // Trigger events
+    if(prefix==='plano')loadPlanogram();
+    if(prefix==='cfg'){
+        // Trigger golden image section
+        const sec=document.getElementById('goldenImageSection');
+        sec.style.display='block';
+        document.getElementById('goldenCustName').textContent=name;
+        const cfg=configs.find(c=>(c.customerCode||c['Customer Code'])===code);
+        if(cfg&&(cfg.GoldenImageBase64||cfg.goldenImage)){
+            document.getElementById('goldenPreview').innerHTML='<img src="'+(cfg.GoldenImageBase64||cfg.goldenImage)+'" class="golden-thumb" alt="Golden Image">';
+            document.getElementById('goldenRemoveBtn').style.display='inline-block';
+        }else{
+            document.getElementById('goldenPreview').innerHTML='<p style="color:var(--muted);font-size:.85em;font-style:italic">No golden image uploaded yet</p>';
+            document.getElementById('goldenRemoveBtn').style.display='none';
+        }
+    }
+}
+function clearCust(prefix){
+    document.getElementById(prefix+'Cust').value='';
+    document.getElementById(prefix+'CustSearch').value='';
+    document.getElementById(prefix+'CustSelected').innerHTML='';
+    if(prefix==='cfg')document.getElementById('goldenImageSection').style.display='none';
+    if(prefix==='plano'){document.getElementById('planoShelves').innerHTML='<p class="no-data">Select a customer above</p>';document.getElementById('planoInfo').textContent='';}
+}
+// Close dropdowns when clicking outside
+document.addEventListener('click',function(e){
+    ['cfg','plano'].forEach(p=>{
+        const wrap=document.getElementById(p+'CustSearch');
+        const dd=document.getElementById(p+'CustDD');
+        if(wrap&&dd&&!wrap.contains(e.target)&&!dd.contains(e.target))dd.classList.remove('open');
+    });
+});
 
 // ═══ SHELF CONFIG ═══
 function renderConfigs(){
@@ -316,7 +373,7 @@ function addConfig(){
     }
 
     renderConfigs();
-    document.getElementById('cfgCust').value='';
+    clearCust('cfg');
     document.getElementById('cfgCount').value='3';
     document.getElementById('cfgNotes').value='';
     document.getElementById('cfgTargetShare').value='0';
@@ -335,13 +392,16 @@ function removeConfig(i){
 // ═══ PLANOGRAM ═══
 function renderCat(){
     const list=document.getElementById('catList');
-    if(!allProd.length){list.innerHTML='<p style="font-size:.8em;color:var(--muted)">No products loaded yet.</p>';return;}
+    const brandFilter=document.getElementById('catBrandFilter').value;
+    let prods=allProd;
+    if(brandFilter)prods=prods.filter(p=>p.Brand===brandFilter);
+    if(!prods.length){list.innerHTML='<p style="font-size:.8em;color:var(--muted)">No products loaded yet.</p>';return;}
     list.innerHTML='';
-    allProd.forEach(p=>{
+    prods.forEach(p=>{
         const id=String(p['PK_ProductID']||'');
+        const pc=p['ProductPC']||p['Product PC']||'';
         const brand=p['Brand']||'';
-        const prod=p['Product']||p['SubBrand']||'';
-        const display=brand+(prod?' – '+prod:'');
+        const display=pc||brand+' – '+(p['Product']||'');
         const div=document.createElement('div');
         div.className='cat-item';
         div.draggable=true;
@@ -357,7 +417,7 @@ function renderCat(){
 }
 function filterCat(){
     const q=document.getElementById('catSearch').value.toLowerCase();
-    document.querySelectorAll('#catList .cat-item').forEach(el=>{el.style.display=el.textContent.toLowerCase().includes(q)?'block':'none';});
+    document.querySelectorAll('#catList .cat-item').forEach(el=>{el.style.display=el.textContent.toLowerCase().includes(q)?'':'none';});
 }
 
 function loadPlanogram(){
@@ -483,7 +543,7 @@ function renderProductLib(){
 
     let filtered=allProd;
     if(brandFilter)filtered=filtered.filter(p=>p.Brand===brandFilter);
-    if(search)filtered=filtered.filter(p=>(p.Brand+' '+p.Product+' '+(p.SubBrand||'')+' '+p.PK_ProductID).toLowerCase().includes(search));
+    if(search)filtered=filtered.filter(p=>(p.Brand+' '+p.Product+' '+(p.ProductPC||'')+' '+(p.SubBrand||'')+' '+p.PK_ProductID).toLowerCase().includes(search));
 
     document.getElementById('libCount').textContent=filtered.length+' of '+allProd.length+' products';
 
@@ -492,7 +552,7 @@ function renderProductLib(){
     grid.innerHTML=filtered.map(p=>{
         const pid=p.PK_ProductID||'';
         const brand=p.Brand||'';
-        const prod=p.Product||p.SubBrand||'';
+        const prod=p.ProductPC||p['Product PC']||p.Product||'';
         const angles=['front','side','top'];
         const imgSlots=angles.map(angle=>{
             const key=pid+'_'+angle;
